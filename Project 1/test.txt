@@ -1,0 +1,22 @@
+setState 302 415 678
+solve A-star h1
+
+randomizeState 6
+printState
+
+printState
+solve A-star h1
+solve A-star h2
+solve beam 5
+maxNodes 7
+
+
+
+printState
+
+0,5,7,6,8,1,2,4,3
+
+randomizeState 3
+printState
+move right
+312 405 678
