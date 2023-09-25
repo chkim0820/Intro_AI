@@ -58,30 +58,29 @@ printState
 # With maxNodes limit
 maxNodes 100
 
-setState 170 324 856
-printState
+setState 018 325 467
 solve A-star
 
-setState 170 324 856
-printState
+setState 018 325 467
 solve beam 10
 
-maxNodes 1000
+maxNodes 1000 # bigger limit
 
 # 1000 nodes still not enough for A* search, which makes sense; considers more
-setState 170 324 856 
-printState
+setState 018 325 467
 solve A-star
 
-setState 170 324 856
-printState
+setState 018 325 467
 solve beam 10
+
+# A* search can find the solution when no maxNodes limit is set
+maxNodes -1 # getting rid of limit
+setState 018 325 467
+solve A-star
 
 ------------------------------------------
 
 # A* and beam search with random states
-
-maxNodes -1 # getting rid of limit
 
 randomizeState 100
 printState
@@ -102,18 +101,18 @@ solve A-star h2
 
 
 
-
+-------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-Note:
-States that work with A*:
+More examples:
+Other states that work with A*:
 315 706 428
 537 104 628
 732 105 846
 018 325 467
 170 324 856
 
-States that don't work with A*; way too many shuffle:
+Other that don't work with A*; way too many shuffle when randomizing:
 057 681 243
 687 325 410
 241 387 056
