@@ -7,6 +7,8 @@ from queue import PriorityQueue
 
 # Stores the current puzzle
 puzzleState = None
+# Stores the max number of nodes to be considered during search
+maxNodesLimit = -1 # -1 if no limit
 
 # Set the puzzle state
 def setState(state):
@@ -74,10 +76,12 @@ def solveAStar(heuristic="h1"):
     # Insert each state in as a tuple (f-score, puzzle state, parent, direction)
     open.put((g+h, puzzleState, None, None)) # initial state
 
-    while (not open.empty()):
+    i = 0
+    while (not open.empty() and (True if (maxNodesLimit == -1 or i < maxNodesLimit) else False)):
         fromQueue = open.get() # get the front node from open queue
         state = fromQueue[1] # puzzle state from the above node
         g += 1
+        i += 1
 
         if numMisplacedTiles(state) == 0: # if goal state reached
             sys.stdout.write("goal reached!\n")
@@ -95,7 +99,10 @@ def solveAStar(heuristic="h1"):
         
         # Append the current iteration's state to the closed list
         closed.append(fromQueue)
-    sys.stdout.write("Unsolvable 8 puzzle\n")
+    if (maxNodesLimit == -1): # maxNodesLimit reached
+        sys.stdout.write("Limit reached for maximum number of nodes considered\n")
+    else: # solution does not exist
+        sys.stdout.write("Unsolvable 8 puzzle\n")
     return None
 
 # Returns the correct number of misplaced tiles
@@ -158,10 +165,12 @@ def solveBeam(k):
     # Insert each state in as a tuple (f-score, puzzle state, parent, direction)
     open.put((g+h, puzzleState, None, None)) # initial state
 
-    while (not open.empty()):
+    i = 0
+    while (not open.empty() and (True if (maxNodesLimit == -1 or i < maxNodesLimit) else False)):
         fromQueue = open.get() # get the front node from open queue
         state = fromQueue[1] # puzzle state from the above node
         g += 1
+        i += 1
 
         if numMisplacedTiles(state) == 0: # if goal state reached
             sys.stdout.write("goal reached!\n")
@@ -181,7 +190,10 @@ def solveBeam(k):
         open = cutQueue(k, open)
         # Append the current iteration's state to the closed list
         closed.append(fromQueue)
-    sys.stdout.write("Beam search could not find a solution...\n")
+    if (maxNodesLimit == -1): # maxNodesLimit reached
+        sys.stdout.write("Limit reached for maximum number of nodes considered\n")
+    else: # beam search couldn't find solution either because no solution exists or because it is an incomplete search
+        sys.stdout.write("Beam search could not find a solution...\n")
     return None
 
 # Cutting down the size of input queue to k
@@ -194,22 +206,10 @@ def cutQueue(k, queue):
         i += 1
     return newQueue
 
-
-
-
-
-
-
 # Specify the maximum number of nodes to be considered during a search
 def maxNodes(n):
-    print("maxNodes called with input:", n)
-
-
-
-
-
-
-
+    global maxNodesLimit
+    maxNodesLimit = n
 
 # Main method
 if __name__ == '__main__':

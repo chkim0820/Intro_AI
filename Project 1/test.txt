@@ -1,5 +1,5 @@
 setState 057 681 243
-solve beam 10
+solve A-star
 
 setState 012 345 678
 printState
@@ -29,6 +29,7 @@ randomizeState 100
 printState
 solve A-star h2
 
+maxNodes 700
 
 
 
