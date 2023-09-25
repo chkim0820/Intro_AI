@@ -88,10 +88,12 @@ def solveAStar(heuristic="h1"):
         moves = ["up", "down", "left", "right"]
         for mv in moves: # try moves in all directions
             nextState = move(state, mv)
-            if nextState != None and listSearch(closed, nextState) < 0: # is a valid movement and the same state is not in the closed list
+            if nextState != None: # is a valid movement
                 h = numMisplacedTiles(nextState) if heuristic == "h1" else manhattanDistance(nextState)
-                open.put((g+h, nextState, fromQueue, mv))
+                if listSearch(closed, nextState, g+h) < 0: # the same state is not in the closed list w/ smaller f-score
+                    open.put((g+h, nextState, fromQueue, mv))
         
+        # Append the current iteration's state to the closed list
         closed.append(fromQueue)
     sys.stdout.write("Unsolvable 8 puzzle\n")
     return None
@@ -121,9 +123,9 @@ def manhattanDistance(puzzle):
 
 # Simple list search method for a list containing tuples; search for the input state
 # Return 1 if the key exists, -1 if it doesn't in the list
-def listSearch(list, key):
+def listSearch(list, key, f):
     for i in list:
-        if i[1] == key:
+        if i[1] == key and i[0] < f:
             return 1
     return -1
 
@@ -143,16 +145,55 @@ def traverseBackMoves(state):
     for i in range(1, len(moves)):
         sys.stdout.write("\n" + str(i) +") Move " + moves[i] + ":\n")
         printState(states[i])
-    
-
-
-
-
-
 
 # Solve the puzzle from its current state by adapting local beam search with k states
 def solveBeam(k):
-    print("solveBeam called with input:", k)
+    sys.stdout.write("\nSolving the puzzle using beam search with " + str(k) + " states...\n")
+    g = 0 # g(n) = depth of the state from the initial state; initially 0
+    h = numMisplacedTiles(puzzleState) # h(n) = heuristic
+    
+    open = PriorityQueue() # priority queue containing possible states
+    closed = list() # list containing already-visited states
+
+    # Insert each state in as a tuple (f-score, puzzle state, parent, direction)
+    open.put((g+h, puzzleState, None, None)) # initial state
+
+    while (not open.empty()):
+        fromQueue = open.get() # get the front node from open queue
+        state = fromQueue[1] # puzzle state from the above node
+        g += 1
+
+        if numMisplacedTiles(state) == 0: # if goal state reached
+            sys.stdout.write("goal reached!\n")
+            traverseBackMoves(fromQueue)
+            return state
+
+        # Get all valid future states from the current state
+        moves = ["up", "down", "left", "right"]
+        for mv in moves: # try moves in all directions
+            nextState = move(state, mv)
+            if nextState != None: # is a valid movement
+                h = numMisplacedTiles(nextState)
+                if listSearch(closed, nextState, g+h) < 0: # the same state is not in the closed list w/ smaller f-score
+                    open.put((g+h, nextState, fromQueue, mv))
+
+        # Cut the nodes/states with the most f-scores; leave k queues
+        open = cutQueue(k, open)
+        # Append the current iteration's state to the closed list
+        closed.append(fromQueue)
+    sys.stdout.write("Beam search could not find a solution...\n")
+    return None
+
+# Cutting down the size of input queue to k
+def cutQueue(k, queue):
+    newQueue = PriorityQueue()
+    i = 0
+    while not queue.empty() and i < k:
+    # while not (queue.empty() or i > k):
+        newQueue.put(queue.get())
+        i += 1
+    return newQueue
+
 
 
 
@@ -162,6 +203,13 @@ def solveBeam(k):
 # Specify the maximum number of nodes to be considered during a search
 def maxNodes(n):
     print("maxNodes called with input:", n)
+
+
+
+
+
+
+
 
 # Main method
 if __name__ == '__main__':

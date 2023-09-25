@@ -1,3 +1,6 @@
+setState 057 681 243
+solve beam 10
+
 setState 012 345 678
 printState
 setState 312 045 678
@@ -15,13 +18,18 @@ printState
 randomizeState 3
 printState
 
+setState 321 876 450
+solve A-star
+
+randomizeState 100
+printState
+solve A-star
+
 randomizeState 100
 printState
 solve A-star h2
 
-randomizeState 1000
-printState
-solve A-star
+
 
 
 Note:
@@ -29,6 +37,7 @@ States that work with A*:
 315 706 428
 537 104 628
 732 105 846
+018 325 467
 
 States that don't work with A*: (debug); not fast enough?
 057 681 243
@@ -38,6 +47,8 @@ States that don't work with A*: (debug); not fast enough?
 382 564 017
 130 852 467
 863 407 521
+467 103 582
+321 876 450
 
 slower:
 438 207 156
