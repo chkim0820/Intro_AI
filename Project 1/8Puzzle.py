@@ -24,7 +24,7 @@ def printState(state="default"):
         sys.stdout.write("printState: no puzzle to print\n") #FIX? throw an error consistently or is it okay to just print?
         return
     for i in range(0, len(state), 4):
-        sys.stdout.write(str(state[i:i+3]) + "\n")    
+        sys.stdout.write(str(state[i:i+3]) + "\n\n")    
 
 # Move the blank tile to the input direction (up, down, left, right)
 def move(puzzle="default", direction="up"): # okay to have diff. parameters
@@ -44,7 +44,7 @@ def move(puzzle="default", direction="up"): # okay to have diff. parameters
         newPos = pos + 1
     # Check the validity of the movement
     if (newPos < 0 or newPos > 10 or newPos == 3 or newPos == 7): 
-        return False, puzzle # input not a valid movement; return original
+        return False, puzzle if puzzle != "default" else puzzleState # input not a valid movement; return original
     copyPuzzle[pos] = copyPuzzle[newPos]
     copyPuzzle[newPos] = '0'
 
