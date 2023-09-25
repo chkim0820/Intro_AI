@@ -1,6 +1,3 @@
-setState 057 681 243
-solve A-star
-
 setState 012 345 678
 printState
 setState 312 045 678
@@ -18,8 +15,23 @@ printState
 randomizeState 3
 printState
 
-setState 321 876 450
+randomizeState 100
+printState
 solve A-star
+
+randomizeState 100
+printState
+solve A-star h2
+
+randomizeState 10000
+printState
+solve beam 50
+
+randomizeState 10000
+printState
+solve beam 10
+
+maxNodes 700
 
 randomizeState 100
 printState
@@ -29,10 +41,16 @@ randomizeState 100
 printState
 solve A-star h2
 
-maxNodes 700
+randomizeState 10000
+printState
+solve beam 50
+
+randomizeState 10000
+printState
+solve beam 10
 
 
-
+-------------------------------------------------------------------------------
 Note:
 States that work with A*:
 315 706 428
