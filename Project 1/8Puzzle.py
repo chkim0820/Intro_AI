@@ -137,15 +137,27 @@ def traverseBackMoves(state):
         moves.insert(0, parent[3]) # insert parent's move to the front
         parent = parent[2]
 
+    sys.stdout.write("\nTotal number of moves: " + str(len(moves)-1) + "\n")
     sys.stdout.write("\nInitial state:\n")
     printState(states[0])
     for i in range(1, len(moves)):
-        sys.stdout.write("\n" + str(i) +") Move " + str(moves[i]) + ":\n")
+        sys.stdout.write("\n" + str(i) +") Move " + moves[i] + ":\n")
         printState(states[i])
+    
+
+
+
+
+
 
 # Solve the puzzle from its current state by adapting local beam search with k states
 def solveBeam(k):
     print("solveBeam called with input:", k)
+
+
+
+
+
 
 # Specify the maximum number of nodes to be considered during a search
 def maxNodes(n):
@@ -180,7 +192,7 @@ if __name__ == '__main__':
             randomizeState(int(line.split()[1]))
         elif (methodName == "solve"):
             if (line.split()[1] == "A-star"):
-                if (len(line) < 3):
+                if (len(line) < 13):
                     solveAStar()
                 else:
                     solveAStar(line.split()[2])
