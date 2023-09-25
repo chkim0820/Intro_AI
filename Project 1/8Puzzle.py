@@ -149,9 +149,12 @@ def traverseBackMoves(state):
     sys.stdout.write("\nTotal number of moves: " + str(len(moves)-1) + "\n")
     sys.stdout.write("\nInitial state:\n")
     printState(states[0])
-    for i in range(1, len(moves)):
-        sys.stdout.write("\n" + str(i) +") Move " + moves[i] + ":\n")
-        printState(states[i])
+    sys.stdout.write("Moves: " + str(moves[1:]))
+    # Commented under prints out all moves and states to get to the goal
+    # for i in range(1, len(moves)):
+        # sys.stdout.write("\n" + str(i) +") Move " + moves[i] + ":\n")
+        # printState(states[i])
+        
 
 # Solve the puzzle from its current state by adapting local beam search with k states
 def solveBeam(k):
