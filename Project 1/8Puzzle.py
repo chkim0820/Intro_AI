@@ -24,7 +24,6 @@ def printState(state="default"):
     for i in range(0, len(state), 4):
         sys.stdout.write(str(state[i:i+3]) + "\n")    
 
-
 # Move the blank tile to the input direction (up, down, left, right)
 def move(puzzle="default", direction="up"): # okay to have diff. parameters
     if puzzle == "default":
@@ -112,12 +111,13 @@ def numMisplacedTiles(puzzle):
 # A-star search using h2 (= sum of the distances of the tiles from their goal positions)
 def manhattanDistance(puzzle):
     sum = 0
-    for n in range(len(puzzle)): # compare all tiles (1 to 8)
-        curTile = puzzle[n]
-        if (curTile != '0' and curTile != ' '): # only if a valid tile exists
-            #calculate distance here
-            print()
-    return 0
+    copyPuzzle = copy.deepcopy(puzzle)
+    del copyPuzzle[3]
+    del copyPuzzle[6]
+    for i in range(len(copyPuzzle)): # compare all tiles (1 to 8)
+        curTile = int(copyPuzzle[i])
+        sum += round(abs(curTile-i)/3) + abs(curTile-i)%3
+    return sum
 
 # Simple list search method for a list containing tuples; search for the input state
 # Return 1 if the key exists, -1 if it doesn't in the list
@@ -133,8 +133,8 @@ def traverseBackMoves(state):
     parent = state
     
     while (parent != None):
-        states.insert(0, parent[1])
-        moves.insert(0, parent[3])
+        states.insert(0, parent[1]) # insert parent's state to the front
+        moves.insert(0, parent[3]) # insert parent's move to the front
         parent = parent[2]
 
     sys.stdout.write("\nInitial state:\n")
@@ -142,7 +142,6 @@ def traverseBackMoves(state):
     for i in range(1, len(moves)):
         sys.stdout.write("\n" + str(i) +") Move " + str(moves[i]) + ":\n")
         printState(states[i])
-
 
 # Solve the puzzle from its current state by adapting local beam search with k states
 def solveBeam(k):
@@ -154,7 +153,7 @@ def maxNodes(n):
 
 # Main method
 if __name__ == '__main__':
-
+    
     # Reading the input file from the terminal
     if len(sys.argv) < 2:
         sys.stdout.write("Include one text file: python/python3 8Puzzle.py <text file containing text commands>")
