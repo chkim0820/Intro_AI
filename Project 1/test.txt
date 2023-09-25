@@ -1,64 +1,119 @@
+# State that works with A*
+setState 425 638 071 # This one takes longer! 
+solve A-star
+
+setState 018 325 467
+solve A-star h2
+
+setState 125 683 074
+solve A-star
+
+
+# All 3 from above beam search
+setState 425 638 071
+solve beam 5
+
+setState 018 325 467
+solve beam 3
+
+setState 125 683 074
+solve beam 5
+
+# Too small of limit (k) could lead to the solution not being found
+setState 867 254 301
+printState
+solve beam 1
+
+-------------------------------------
+
+# Testing other methods
+
+# setState/printState
 setState 012 345 678
 printState
 setState 312 045 678
 printState
 
+# move
 move down
 printState
 move up
 printState
 move right
 printState
-move left
+move left 
+printState
+move left # invalid movement doesn't change anything
 printState
 
+# randomizeState
 randomizeState 3
 printState
 
-randomizeState 100
+randomizeState 10000
+printState
+
+-------------------------------------------
+
+# With maxNodes limit
+maxNodes 100
+
+setState 170 324 856
 printState
 solve A-star
 
-randomizeState 100
-printState
-solve A-star h2
-
-randomizeState 10000
-printState
-solve beam 50
-
-randomizeState 10000
+setState 170 324 856
 printState
 solve beam 10
 
-maxNodes 700
+maxNodes 1000
 
-randomizeState 100
+# 1000 nodes still not enough for A* search, which makes sense; considers more
+setState 170 324 856 
 printState
 solve A-star
 
+setState 170 324 856
+printState
+solve beam 10
+
+------------------------------------------
+
+# A* and beam search with random states
+
+maxNodes -1 # getting rid of limit
+
 randomizeState 100
 printState
-solve A-star h2
+solve beam 5
 
-randomizeState 10000
+randomizeState 100
 printState
 solve beam 50
 
-randomizeState 10000
+# Smaller randomizeState for A* search
+randomizeState 5
 printState
-solve beam 10
+solve A-star 
+
+randomizeState 10
+printState
+solve A-star h2
+
+
 
 
 -------------------------------------------------------------------------------
+
 Note:
 States that work with A*:
 315 706 428
 537 104 628
 732 105 846
 018 325 467
+170 324 856
 
-States that don't work with A*: (debug); not fast enough?
+States that don't work with A*; way too many shuffle:
 057 681 243
 687 325 410
 241 387 056
@@ -68,6 +123,3 @@ States that don't work with A*: (debug); not fast enough?
 863 407 521
 467 103 582
 321 876 450
-
-slower:
-438 207 156

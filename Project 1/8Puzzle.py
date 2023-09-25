@@ -17,10 +17,10 @@ def setState(state):
 
 # Print the current puzzle state or the input state
 def printState(state="default"):
-    if state == "default":
+    if state == "default": # set state to the current state
         sys.stdout.write("Printing the current puzzle state:\n")
         state = puzzleState
-    if state == None:
+    if state == None: # null state
         sys.stdout.write("printState: no puzzle to print\n") #FIX? throw an error consistently or is it okay to just print?
         return
     for i in range(0, len(state), 4):
@@ -29,10 +29,10 @@ def printState(state="default"):
 # Move the blank tile to the input direction (up, down, left, right)
 def move(puzzle="default", direction="up"): # okay to have diff. parameters
     if puzzle == "default":
-        puzzle =  copy.deepcopy(puzzleState)
+        copyPuzzle =  copy.deepcopy(puzzleState)
     else:
-        puzzle = copy.deepcopy(puzzle)
-    pos = puzzle.index("0") # index of 0 (empty space)
+        copyPuzzle = copy.deepcopy(puzzle)
+    pos = copyPuzzle.index("0") # index of 0 (empty space)
     
     if (direction == "up"):
         newPos = pos - 4
@@ -44,20 +44,20 @@ def move(puzzle="default", direction="up"): # okay to have diff. parameters
         newPos = pos + 1
     # Check the validity of the movement
     if (newPos < 0 or newPos > 10 or newPos == 3 or newPos == 7): 
-        return None # input not a valid movement
-    puzzle[pos] = puzzle[newPos]
-    puzzle[newPos] = '0'
+        return False, puzzle # input not a valid movement; return original
+    copyPuzzle[pos] = copyPuzzle[newPos]
+    copyPuzzle[newPos] = '0'
 
-    return puzzle # movement successful
+    return True, copyPuzzle # movement successful
 
 # Make n random moves from the goal state; for ensuring solvable puzzle
 def randomizeState(n):
-    moves = ["up", "down", "left", "right"]
+    moves = ["up", "down", "left", "right"] # possible moves
     setState("012 345 678")
     it = 0 # iteration
     while (it < n):
-        state = move(direction=random.choice(moves))
-        if (None != state):
+        valid, state = move(direction=random.choice(moves))
+        if (valid):
             it += 1
             setState(state)
 
@@ -91,15 +91,15 @@ def solveAStar(heuristic="h1"):
         # Get all valid future states from the current state
         moves = ["up", "down", "left", "right"]
         for mv in moves: # try moves in all directions
-            nextState = move(state, mv)
-            if nextState != None: # is a valid movement
+            valid, nextState = move(state, mv)
+            if valid: # is a valid movement
                 h = numMisplacedTiles(nextState) if heuristic == "h1" else manhattanDistance(nextState)
                 if listSearch(closed, nextState, g+h) < 0: # the same state is not in the closed list w/ smaller f-score
                     open.put((g+h, nextState, fromQueue, mv))
         
         # Append the current iteration's state to the closed list
         closed.append(fromQueue)
-    if (maxNodesLimit == -1): # maxNodesLimit reached
+    if (maxNodesLimit != -1): # maxNodesLimit reached
         sys.stdout.write("Limit reached for maximum number of nodes considered\n")
     else: # solution does not exist
         sys.stdout.write("Unsolvable 8 puzzle\n")
@@ -107,24 +107,24 @@ def solveAStar(heuristic="h1"):
 
 # Returns the correct number of misplaced tiles
 def numMisplacedTiles(puzzle):
-    correctTiles = 0
-    index = 1
+    correctTiles = 0 # number of correct tiles
+    index = 0 # correct index
     for n in range(len(puzzle)): # compare all tiles (1 to 8)
         curTile = puzzle[n]
-        if (curTile != '0' and curTile != ' '): # only if a valid tile exists
+        if (n != 3 and n != 7): # if not ' ' (blank index in list)
             if (index == int(curTile)):
                 correctTiles += 1
             index += 1
-    return 8 - correctTiles
+    return 9 - correctTiles
 
 # A-star search using h2 (= sum of the distances of the tiles from their goal positions)
 def manhattanDistance(puzzle):
-    sum = 0
-    copyPuzzle = copy.deepcopy(puzzle)
+    sum = 0 # sum of Manhattan distances
+    copyPuzzle = copy.deepcopy(puzzle) # to avoid altering original object
     del copyPuzzle[3]
     del copyPuzzle[6]
     for i in range(len(copyPuzzle)): # compare all tiles (1 to 8)
-        curTile = int(copyPuzzle[i])
+        curTile = int(copyPuzzle[i]) # value of ith tile
         sum += round(abs(curTile-i)/3) + abs(curTile-i)%3
     return sum
 
@@ -136,6 +136,7 @@ def listSearch(list, key, f):
             return 1
     return -1
 
+# Print out the steps from initial state to goal state
 def traverseBackMoves(state):
     moves = list() # moves/directions made from beginning to end
     states = list() # states visited from beginning to end
@@ -149,7 +150,7 @@ def traverseBackMoves(state):
     sys.stdout.write("\nTotal number of moves: " + str(len(moves)-1) + "\n")
     sys.stdout.write("\nInitial state:\n")
     printState(states[0])
-    sys.stdout.write("Moves: " + str(moves[1:]))
+    sys.stdout.write("Moves: " + str(moves[1:]) + "\n\n")
     # Commented under prints out all moves and states to get to the goal
     # for i in range(1, len(moves)):
         # sys.stdout.write("\n" + str(i) +") Move " + moves[i] + ":\n")
@@ -183,8 +184,8 @@ def solveBeam(k):
         # Get all valid future states from the current state
         moves = ["up", "down", "left", "right"]
         for mv in moves: # try moves in all directions
-            nextState = move(state, mv)
-            if nextState != None: # is a valid movement
+            valid, nextState = move(state, mv)
+            if valid: # is a valid movement
                 h = numMisplacedTiles(nextState)
                 if listSearch(closed, nextState, g+h) < 0: # the same state is not in the closed list w/ smaller f-score
                     open.put((g+h, nextState, fromQueue, mv))
@@ -193,7 +194,7 @@ def solveBeam(k):
         open = cutQueue(k, open)
         # Append the current iteration's state to the closed list
         closed.append(fromQueue)
-    if (maxNodesLimit == -1): # maxNodesLimit reached
+    if (maxNodesLimit != -1): # maxNodesLimit reached
         sys.stdout.write("Limit reached for maximum number of nodes considered\n")
     else: # beam search couldn't find solution either because no solution exists or because it is an incomplete search
         sys.stdout.write("Beam search could not find a solution...\n")
@@ -210,7 +211,7 @@ def cutQueue(k, queue):
     return newQueue
 
 # Specify the maximum number of nodes to be considered during a search
-def maxNodes(n):
+def maxNodes(n=-1):
     global maxNodesLimit
     maxNodesLimit = n
 
@@ -238,12 +239,13 @@ if __name__ == '__main__':
         elif (methodName == "printState"):
             printState()
         elif (methodName == "move"):
-            setState(''.join(move(direction=line.split()[1])))
+            valid, state = move(direction=line.split()[1])
+            setState(''.join(state))
         elif (methodName == "randomizeState"):
             randomizeState(int(line.split()[1]))
         elif (methodName == "solve"):
             if (line.split()[1] == "A-star"):
-                if (len(line) < 13):
+                if (len(line.split()) < 3): # if no specification for heuristic
                     solveAStar()
                 else:
                     solveAStar(line.split()[2])
