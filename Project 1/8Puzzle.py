@@ -5,6 +5,7 @@ import random
 import copy
 from queue import PriorityQueue
 
+# Stores the current puzzle
 puzzleState = None
 
 # Set the puzzle state
@@ -12,18 +13,20 @@ def setState(state):
     global puzzleState
     puzzleState = list(state)
 
-# Print the current puzzle state
-def printState():
-    if puzzleState == None:
-        print("printState: no puzzle to print") #FIX? throw an error consistently or is it okay to just print?
+# Print the current puzzle state or the input state
+def printState(state="default"):
+    if state == "default":
+        sys.stdout.write("Printing the current puzzle state:\n")
+        state = puzzleState
+    if state == None:
+        sys.stdout.write("printState: no puzzle to print\n") #FIX? throw an error consistently or is it okay to just print?
         return
-    print("\n8 Puzzle:")
-    print(puzzleState[:3])
-    print(puzzleState[4:7])
-    print(puzzleState[8:11])
+    for i in range(0, len(state), 4):
+        sys.stdout.write(str(state[i:i+3]) + "\n")    
+
 
 # Move the blank tile to the input direction (up, down, left, right)
-def move(puzzle, direction): # okay to have diff. parameters
+def move(puzzle="default", direction="up"): # okay to have diff. parameters
     if puzzle == "default":
         puzzle =  copy.deepcopy(puzzleState)
     else:
@@ -50,15 +53,16 @@ def move(puzzle, direction): # okay to have diff. parameters
 def randomizeState(n):
     moves = ["up", "down", "left", "right"]
     setState("012 345 678")
-    it = 0 # for iteration
+    it = 0 # iteration
     while (it < n):
-        state = move("default", random.choice(moves))
+        state = move(direction=random.choice(moves))
         if (None != state):
             it += 1
             setState(state)
 
 # Solve the puzzle from its current state using A-star search
-def solveAStar(heuristic):
+def solveAStar(heuristic="h1"):
+    sys.stdout.write("\nSolving the puzzle using A* search...\n")
     g = 0 # g(n) = depth of the state from the initial state; initially 0
     if (heuristic == "h1"):
         h = numMisplacedTiles(puzzleState) # h(n) = heuristic; number of misplaced tiles in the current state
@@ -69,102 +73,29 @@ def solveAStar(heuristic):
     closed = list() # list containing already-visited states
 
     # Insert each state in as a tuple (f-score, puzzle state, parent, direction)
-    open.put((g+h, puzzleState, None, None)) # Initial state
+    open.put((g+h, puzzleState, None, None)) # initial state
 
     while (not open.empty()):
         fromQueue = open.get() # get the front node from open queue
         state = fromQueue[1] # puzzle state from the above node
-        successorList = list()
-        depth += 1
+        g += 1
 
-        # Get all possible future states from the current state
-        right = move(state, "right")
-        left = move(state, "left")
-        up = move(state, "up")
-        down = move(state, "down")
-        successorList.add((numMisplacedTiles(right)+depth, right, state, "right"))
-        successorList.add((numMisplacedTiles(left)+depth, left, state, "left"))
-        successorList.add((numMisplacedTiles(up)+depth, up, state, "up"))
-        successorList.add((numMisplacedTiles(down)+depth, down, state, "down"))
-        # copy for the other three
+        if numMisplacedTiles(state) == 0: # if goal state reached
+            sys.stdout.write("goal reached!\n")
+            traverseBackMoves(fromQueue)
+            return state
+
+        # Get all valid future states from the current state
+        moves = ["up", "down", "left", "right"]
+        for mv in moves: # try moves in all directions
+            nextState = move(state, mv)
+            if nextState != None and listSearch(closed, nextState) < 0: # is a valid movement and the same state is not in the closed list
+                h = numMisplacedTiles(nextState) if heuristic == "h1" else manhattanDistance(nextState)
+                open.put((g+h, nextState, fromQueue, mv))
         
-        # Check whether to add the four successors to the open queue
-        if (): # if the same state as this current node is in the open or closed queue with a lower f-score, don't add. Else, do add.
-            print()
-        closed.add(fromQueue)
-
-# A-star search using H1 (= # misplaced tiles)
-# Keep both open and closed queues for memory
-def AStarH1():
-    g = 0 # g(n) = depth of the state from the initial state; initially 0
-    h = numMisplacedTiles(puzzleState) # h(n) = heuristic; number of misplaced tiles in the current state
-    open = PriorityQueue() # priority queue containing possible states
-    closed = list() # priority queue containing visited states
-
-    # Insert each state in as a tuple; insert current/initial state (f-score, puzzle state, parent, direction)
-    open.put((g+h, puzzleState, None, None))
-
-    while (not open.empty()):
-        fromQueue = open.get() # get the front node from open queue
-        state = fromQueue[1] # puzzle state from the above node
-        successorList = list()
-        depth += 1
-
-        # Get all possible future states from the current state
-        right = move(state, "right")
-        left = move(state, "left")
-        up = move(state, "up")
-        down = move(state, "down")
-        successorList.add((numMisplacedTiles(right)+depth, right, state, "right"))
-        successorList.add((numMisplacedTiles(left)+depth, left, state, "left"))
-        successorList.add((numMisplacedTiles(up)+depth, up, state, "up"))
-        successorList.add((numMisplacedTiles(down)+depth, down, state, "down"))
-        # copy for the other three
-        
-        # Check whether to add the four successors to the open queue
-        if (): # if the same state as this current node is in the open or closed queue with a lower f-score, don't add. Else, do add.
-            print()
-        closed.add(fromQueue)
-
-
-
-        exit()
-
-
-        
-        tempR = copy.deepcopy(puzzleState)
-        tempL = copy.deepcopy(puzzleState)
-        tempU = copy.deepcopy(puzzleState)
-        tempD = copy.deepcopy(puzzleState)
-        if (1 == move(tempR, "right")):
-            pq.put((numMisplacedTiles(tempR) + depth, tempR, "right")) # maybe add another for direction
-        if (1 == move(tempL, "left")):
-            pq.put((numMisplacedTiles(tempL)+ depth, tempL, "left"))
-        if (1 == move(tempU, "up")):
-            pq.put((numMisplacedTiles(tempU)+ depth, tempU, "up"))
-        if (1 == move(tempD, "down")):
-            pq.put((numMisplacedTiles(tempD)+ depth, tempD, "down"))
-
-
-
-     
-    while (h1 > 0): # does it only look one step ahead? if so, just choose a state with the lowest heuristics
-              
-
-        # use priority queue to choose the lowest h1
-        pq = PriorityQueue()
-        
-
-        newState = pq.get()
-        setState(newState[1])
-        h1 = newState[0]
-
-        depth += 1
-        print(newState[2])
-        printState()
-    exit()
-    return depth
-
+        closed.append(fromQueue)
+    sys.stdout.write("Unsolvable 8 puzzle\n")
+    return None
 
 # Returns the correct number of misplaced tiles
 def numMisplacedTiles(puzzle):
@@ -179,8 +110,39 @@ def numMisplacedTiles(puzzle):
     return 8 - correctTiles
 
 # A-star search using h2 (= sum of the distances of the tiles from their goal positions)
-def manhattanDistance():
-    print("a star h2")
+def manhattanDistance(puzzle):
+    sum = 0
+    for n in range(len(puzzle)): # compare all tiles (1 to 8)
+        curTile = puzzle[n]
+        if (curTile != '0' and curTile != ' '): # only if a valid tile exists
+            #calculate distance here
+            print()
+    return 0
+
+# Simple list search method for a list containing tuples; search for the input state
+# Return 1 if the key exists, -1 if it doesn't in the list
+def listSearch(list, key):
+    for i in list:
+        if i[1] == key:
+            return 1
+    return -1
+
+def traverseBackMoves(state):
+    moves = list() # moves/directions made from beginning to end
+    states = list() # states visited from beginning to end
+    parent = state
+    
+    while (parent != None):
+        states.insert(0, parent[1])
+        moves.insert(0, parent[3])
+        parent = parent[2]
+
+    sys.stdout.write("\nInitial state:\n")
+    printState(states[0])
+    for i in range(1, len(moves)):
+        sys.stdout.write("\n" + str(i) +") Move " + str(moves[i]) + ":\n")
+        printState(states[i])
+
 
 # Solve the puzzle from its current state by adapting local beam search with k states
 def solveBeam(k):
@@ -195,13 +157,13 @@ if __name__ == '__main__':
 
     # Reading the input file from the terminal
     if len(sys.argv) < 2:
-        print("Include one text file: python/python3 8Puzzle.py <text file containing text commands>")
+        sys.stdout.write("Include one text file: python/python3 8Puzzle.py <text file containing text commands>")
         exit()
     with open(sys.argv[1], 'r') as f:
         textFile = f.read()
 
     # Translating the lines from the file to arguments in this program
-    print("Executing commands...")
+    sys.stdout.write("Executing commands from the input text file...\n")
     for line in textFile.splitlines():
         try:
             methodName = line.split()[0]
@@ -214,12 +176,15 @@ if __name__ == '__main__':
         elif (methodName == "printState"):
             printState()
         elif (methodName == "move"):
-            setState(''.join(move(puzzle="default", direction=line.split()[1])))
+            setState(''.join(move(direction=line.split()[1])))
         elif (methodName == "randomizeState"):
             randomizeState(int(line.split()[1]))
         elif (methodName == "solve"):
             if (line.split()[1] == "A-star"):
-                solveAStar(line.split()[2])
+                if (len(line) < 3):
+                    solveAStar()
+                else:
+                    solveAStar(line.split()[2])
             elif (line.split()[1] == "beam"):
                 solveBeam(int(line.split()[2]))
         elif (methodName == "maxNodes"):

@@ -1,22 +1,30 @@
-setState 302 415 678
-solve A-star h1
-
 randomizeState 6
-printState
-
+solve A-star h1
+randomizeState 5
+solve A-star h1
+randomizeState 100
 printState
 solve A-star h1
-solve A-star h2
+
 solve beam 5
 maxNodes 7
 
 
-
 printState
 
-0,5,7,6,8,1,2,4,3
 
 randomizeState 3
 printState
 move right
-312 405 678
+
+
+States that don't work with A*: (debug); not fast enough?
+057 681 243
+057 681 243
+687 325 410
+241 387 056
+365 178 042
+382 564 017
+
+slower:
+438 207 156
