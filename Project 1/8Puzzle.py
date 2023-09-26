@@ -68,7 +68,7 @@ def randomizeState(n):
 def solveAStar(heuristic="h1", puzzle="default"):
     if puzzle == "default":
         puzzle = puzzleState
-    # sys.stdout.write("\nSolving the puzzle using A* search...\n")
+    sys.stdout.write("\nSolving the puzzle using A* search...\n")
     g = 0 # g(n) = depth of the state from the initial state; initially 0
     if (heuristic == "h1"):
         h = numMisplacedTiles(puzzle) # h(n) = heuristic; number of misplaced tiles in the current state
@@ -89,7 +89,7 @@ def solveAStar(heuristic="h1", puzzle="default"):
         i += 1
 
         if numMisplacedTiles(state) == 0: # if goal state reached
-            # sys.stdout.write("goal reached!\n")
+            sys.stdout.write("goal reached!\n")
             return traverseBackMoves(fromQueue)
 
         # Get all valid future states from the current state
@@ -103,10 +103,10 @@ def solveAStar(heuristic="h1", puzzle="default"):
         
         # Append the current iteration's state to the closed list
         closed.append(fromQueue)
-    # if (maxNodesLimit != -1): # maxNodesLimit reached
-    #     sys.stdout.write("Limit reached for maximum number of nodes considered\n")
-    # else: # solution does not exist
-    #     sys.stdout.write("Unsolvable 8 puzzle\n")
+    if (maxNodesLimit != -1): # maxNodesLimit reached
+        sys.stdout.write("Limit reached for maximum number of nodes considered\n")
+    else: # solution does not exist
+        sys.stdout.write("Unsolvable 8 puzzle\n")
     return -1 # returned if no moves to return
 
 # Returns the correct number of misplaced tiles
@@ -151,10 +151,10 @@ def traverseBackMoves(state):
         moves.insert(0, parent[3]) # insert parent's move to the front
         parent = parent[2]
 
-    # sys.stdout.write("\nTotal number of moves: " + str(len(moves)-1) + "\n")
-    # sys.stdout.write("\nInitial state:\n")
-    # printState(states[0])
-    # sys.stdout.write("Moves: " + str(moves[1:]) + "\n\n")
+    sys.stdout.write("\nTotal number of moves: " + str(len(moves)-1) + "\n")
+    sys.stdout.write("\nInitial state:\n")
+    printState(states[0])
+    sys.stdout.write("Moves: " + str(moves[1:]) + "\n\n")
     # Commented under prints out all moves and states to get to the goal
     # for i in range(1, len(moves)):
         # sys.stdout.write("\n" + str(i) +") Move " + moves[i] + ":\n")
@@ -166,7 +166,7 @@ def traverseBackMoves(state):
 def solveBeam(k, puzzle="default"):
     if puzzle == "default":
         puzzle = puzzleState
-    # sys.stdout.write("\nSolving the puzzle using beam search with " + str(k) + " states...\n")
+    sys.stdout.write("\nSolving the puzzle using beam search with " + str(k) + " states...\n")
     g = 0 # g(n) = depth of the state from the initial state; initially 0
     h = numMisplacedTiles(puzzle) # h(n) = heuristic
     
@@ -184,7 +184,7 @@ def solveBeam(k, puzzle="default"):
         i += 1
 
         if numMisplacedTiles(state) == 0: # if goal state reached
-            # sys.stdout.write("goal reached!\n")
+            sys.stdout.write("goal reached!\n")
             return traverseBackMoves(fromQueue)
 
         # Get all valid future states from the current state
@@ -200,10 +200,10 @@ def solveBeam(k, puzzle="default"):
         open = cutQueue(k, open)
         # Append the current iteration's state to the closed list
         closed.append(fromQueue)
-    # if (maxNodesLimit != -1): # maxNodesLimit reached
-    #     sys.stdout.write("Limit reached for maximum number of nodes considered\n")
-    # else: # beam search couldn't find solution either because no solution exists or because it is an incomplete search
-    #     sys.stdout.write("Beam search could not find a solution...\n")
+    if (maxNodesLimit != -1): # maxNodesLimit reached
+        sys.stdout.write("Limit reached for maximum number of nodes considered\n")
+    else: # beam search couldn't find solution either because no solution exists or because it is an incomplete search
+        sys.stdout.write("Beam search could not find a solution...\n")
     return -1 # returned if no moves to return
 
 # Cutting down the size of input queue to k
@@ -327,7 +327,7 @@ def experimentFour(solA1, solA2, solB):
 
 # Main method
 if __name__ == '__main__':
-    allExperiments()
+    # allExperiments() # Calls the experiment functions
     
     # Reading the input file from the terminal
     if len(sys.argv) < 2:
