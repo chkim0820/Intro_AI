@@ -3,6 +3,8 @@
 import sys
 import random
 import copy
+import math
+import time
 from queue import PriorityQueue
 
 # Stores the current puzzle
@@ -60,21 +62,24 @@ def randomizeState(n):
         if (valid):
             it += 1
             setState(state)
+    return copy.deepcopy(state)
 
 # Solve the puzzle from its current state using A-star search
-def solveAStar(heuristic="h1"):
-    sys.stdout.write("\nSolving the puzzle using A* search...\n")
+def solveAStar(heuristic="h1", puzzle="default"):
+    if puzzle == "default":
+        puzzle = puzzleState
+    # sys.stdout.write("\nSolving the puzzle using A* search...\n")
     g = 0 # g(n) = depth of the state from the initial state; initially 0
     if (heuristic == "h1"):
-        h = numMisplacedTiles(puzzleState) # h(n) = heuristic; number of misplaced tiles in the current state
+        h = numMisplacedTiles(puzzle) # h(n) = heuristic; number of misplaced tiles in the current state
     else:
-        h = manhattanDistance(puzzleState) # h(n) = Manhattan distance
+        h = manhattanDistance(puzzle) # h(n) = Manhattan distance
     
     open = PriorityQueue() # priority queue containing possible states
     closed = list() # list containing already-visited states
 
     # Insert each state in as a tuple (f-score, puzzle state, parent, direction)
-    open.put((g+h, puzzleState, None, None)) # initial state
+    open.put((g+h, puzzle, None, None)) # initial state
 
     i = 0
     while (not open.empty() and (True if (maxNodesLimit == -1 or i < maxNodesLimit) else False)):
@@ -84,9 +89,8 @@ def solveAStar(heuristic="h1"):
         i += 1
 
         if numMisplacedTiles(state) == 0: # if goal state reached
-            sys.stdout.write("goal reached!\n")
-            traverseBackMoves(fromQueue)
-            return state
+            # sys.stdout.write("goal reached!\n")
+            return traverseBackMoves(fromQueue)
 
         # Get all valid future states from the current state
         moves = ["up", "down", "left", "right"]
@@ -99,11 +103,11 @@ def solveAStar(heuristic="h1"):
         
         # Append the current iteration's state to the closed list
         closed.append(fromQueue)
-    if (maxNodesLimit != -1): # maxNodesLimit reached
-        sys.stdout.write("Limit reached for maximum number of nodes considered\n")
-    else: # solution does not exist
-        sys.stdout.write("Unsolvable 8 puzzle\n")
-    return None
+    # if (maxNodesLimit != -1): # maxNodesLimit reached
+    #     sys.stdout.write("Limit reached for maximum number of nodes considered\n")
+    # else: # solution does not exist
+    #     sys.stdout.write("Unsolvable 8 puzzle\n")
+    return -1 # returned if no moves to return
 
 # Returns the correct number of misplaced tiles
 def numMisplacedTiles(puzzle):
@@ -147,27 +151,30 @@ def traverseBackMoves(state):
         moves.insert(0, parent[3]) # insert parent's move to the front
         parent = parent[2]
 
-    sys.stdout.write("\nTotal number of moves: " + str(len(moves)-1) + "\n")
-    sys.stdout.write("\nInitial state:\n")
-    printState(states[0])
-    sys.stdout.write("Moves: " + str(moves[1:]) + "\n\n")
+    # sys.stdout.write("\nTotal number of moves: " + str(len(moves)-1) + "\n")
+    # sys.stdout.write("\nInitial state:\n")
+    # printState(states[0])
+    # sys.stdout.write("Moves: " + str(moves[1:]) + "\n\n")
     # Commented under prints out all moves and states to get to the goal
     # for i in range(1, len(moves)):
         # sys.stdout.write("\n" + str(i) +") Move " + moves[i] + ":\n")
         # printState(states[i])
-        
 
+    return len(moves) - 1
+        
 # Solve the puzzle from its current state by adapting local beam search with k states
-def solveBeam(k):
-    sys.stdout.write("\nSolving the puzzle using beam search with " + str(k) + " states...\n")
+def solveBeam(k, puzzle="default"):
+    if puzzle == "default":
+        puzzle = puzzleState
+    # sys.stdout.write("\nSolving the puzzle using beam search with " + str(k) + " states...\n")
     g = 0 # g(n) = depth of the state from the initial state; initially 0
-    h = numMisplacedTiles(puzzleState) # h(n) = heuristic
+    h = numMisplacedTiles(puzzle) # h(n) = heuristic
     
     open = PriorityQueue() # priority queue containing possible states
     closed = list() # list containing already-visited states
 
     # Insert each state in as a tuple (f-score, puzzle state, parent, direction)
-    open.put((g+h, puzzleState, None, None)) # initial state
+    open.put((g+h, puzzle, None, None)) # initial state
 
     i = 0
     while (not open.empty() and (True if (maxNodesLimit == -1 or i < maxNodesLimit) else False)):
@@ -177,9 +184,8 @@ def solveBeam(k):
         i += 1
 
         if numMisplacedTiles(state) == 0: # if goal state reached
-            sys.stdout.write("goal reached!\n")
-            traverseBackMoves(fromQueue)
-            return state
+            # sys.stdout.write("goal reached!\n")
+            return traverseBackMoves(fromQueue)
 
         # Get all valid future states from the current state
         moves = ["up", "down", "left", "right"]
@@ -194,11 +200,11 @@ def solveBeam(k):
         open = cutQueue(k, open)
         # Append the current iteration's state to the closed list
         closed.append(fromQueue)
-    if (maxNodesLimit != -1): # maxNodesLimit reached
-        sys.stdout.write("Limit reached for maximum number of nodes considered\n")
-    else: # beam search couldn't find solution either because no solution exists or because it is an incomplete search
-        sys.stdout.write("Beam search could not find a solution...\n")
-    return None
+    # if (maxNodesLimit != -1): # maxNodesLimit reached
+    #     sys.stdout.write("Limit reached for maximum number of nodes considered\n")
+    # else: # beam search couldn't find solution either because no solution exists or because it is an incomplete search
+    #     sys.stdout.write("Beam search could not find a solution...\n")
+    return -1 # returned if no moves to return
 
 # Cutting down the size of input queue to k
 def cutQueue(k, queue):
@@ -215,8 +221,113 @@ def maxNodes(n=-1):
     global maxNodesLimit
     maxNodesLimit = n
 
+
+######################### Experiment functions below #########################
+
+
+# Experiment results are printed out to the terminal
+def allExperiments():
+    states = generateRandomSamples() # generate the states for experiments
+
+    # Test different maxNodes limits
+    experimentOne(states)
+
+    solA1, solA2, solB = searchResults(states, -1) # Saved so the search algorithms run only once
+    experimentTwo(solA1, solA2)
+    experimentThree(solA1, solA2, solB)
+    experimentFour(solA1, solA2, solB)
+
+# For experiment, generate 100 samples of puzzles with 1-50 random moves from goal state
+def generateRandomSamples():
+    states = list()
+    i = 1
+    while i <= 100: 
+        puzzle = randomizeState(math.ceil(i/2))
+        if puzzle not in states:
+            states.append(puzzle)
+            i += 1
+    return states
+
+# Solve the given 100 random states with the given algorithm and other specifications
+def testSearch(algorithm, states, heuristic=0, limit=-1):
+    maxNodes(limit) # set maxNodes limit
+    valid = list() # list of solved puzzles
+    for state in states: # for all 100 generated puzzles
+        numMoves = 0 # number of moves to goal state
+        start = time.time()
+        if (algorithm==0):
+            numMoves = solveAStar(puzzle=state, heuristic="h1") if heuristic==0 else solveAStar(puzzle=state, heuristic="h2")
+        else:
+            numMoves = solveBeam(k=10, puzzle=state)     
+        end = time.time()
+        if numMoves!=-1: # search works
+            valid.append((numMoves, state, end - start))
+    maxNodes(-1) # set maxNodes limit back to -1 (no limit)
+    return valid
+
+# All three algorithms run on the 100 random puzzles with testSearch function
+def searchResults(states, limit=-1):
+    solA1 = testSearch(algorithm=0, states=states, heuristic=0, limit=limit)
+    solA2 = testSearch(algorithm=0, states=states, heuristic=1, limit=limit)
+    solB = testSearch(algorithm=1, states=states, limit=limit)
+    return solA1, solA2, solB
+
+# Compare number of solvable puzzles with different maxNodes limits
+def experimentOne(states):
+    sys.stdout.write("Experiment 1) Fraction of solvable puzzles with different maxNodes limits:\n")
+    for i in [100, 1000, 10000]:
+        sys.stdout.write("\nmaxNodes = " + str(i) + "\n")
+        a1, a2, b = searchResults(states, limit=i)
+        numValid = len(a1)
+        sys.stdout.write("A* search with h1: " + str(numValid) + "/100 = " + str(numValid/100) + "\n")
+        numValid = len(a2)
+        sys.stdout.write("A* search with h2: " + str(numValid) + "/100 = " + str(numValid/100) + "\n")
+        numValid = len(b)
+        sys.stdout.write("Beam search: " + str(numValid) + "/100 = " + str(numValid/100) + "\n")
+
+# Determine which heuristic is better; compare runtime since guaranteed optimality & completeness
+def experimentTwo(solA1, solA2):
+    sys.stdout.write("\nExperiment 2) Testing which A* search heuristic is better:\n")
+
+    sys.stdout.write("h1 (number of misplaced tiles):\n")
+    sum = 0
+    for i in solA1:
+        sum += i[2]
+    sys.stdout.write("For A* search with h1, the average runtime over the sample 100 puzzles is " + str(sum/len(solA1)) + "\n") 
+
+    sys.stdout.write("h2 (Manhattan distance):\n")
+    sum = 0
+    for i in solA2:
+        sum += i[2]
+    sys.stdout.write("For A* search with h2, the average runtime over the sample 100 puzzles is " + str(sum/len(solA2)) + "\n")  
+    
+# Compares the solution length (number of moves from beginning to end) across three algorithms
+def experimentThree(solA1, solA2, solB):
+    sys.stdout.write("\nExperiment 3) Variance in solutions' lengths (in number of moves);" +  
+          "The average over solving all solvable puzzles (out of 100) are calculated.\n")
+    sum = 0
+    for i in solA1:
+        sum += i[0]
+    sys.stdout.write("For A* search with h1: " + str(sum/len(solA1)) + "\n")
+    sum = 0
+    for i in solA2:
+        sum += i[0]
+    sys.stdout.write("For A* search with h2: " + str(sum/len(solA2)) + "\n")  
+    sum = 0
+    for i in solB:
+        sum += i[0]
+    sys.stdout.write("For beam search: " + str(sum/len(solB)) + "\n")
+
+def experimentFour(solA1, solA2, solB):
+    sys.stdout.write("\nExperiment 4) The fraction of solvable puzzles:\n")
+    sys.stdout.write("For A* search with h1: " + str(len(solA1)) + " solved puzzles -> " + str(len(solA1)/100) + "\n")
+    sys.stdout.write("For A* search with h2: " + str(len(solA2)) + " solved puzzles -> " + str(len(solA2)/100) + "\n")
+    sys.stdout.write("For beam search: " + str(len(solB)) + " solved puzzles -> " + str(len(solB)/100) + "\n")
+
+
 # Main method
 if __name__ == '__main__':
+    allExperiments()
     
     # Reading the input file from the terminal
     if len(sys.argv) < 2:
@@ -248,9 +359,9 @@ if __name__ == '__main__':
                 if (len(line.split()) < 3): # if no specification for heuristic
                     solveAStar()
                 else:
-                    solveAStar(line.split()[2])
+                    solveAStar(heuristic=line.split()[2])
             elif (line.split()[1] == "beam"):
-                solveBeam(int(line.split()[2]))
+                solveBeam(k=int(line.split()[2]))
         elif (methodName == "maxNodes"):
             maxNodes(int(line.split()[1]))
         

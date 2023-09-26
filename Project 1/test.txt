@@ -3,7 +3,7 @@ setState 425 638 071 # This one takes longer!
 solve A-star
 
 setState 018 325 467
-solve A-star h2
+solve A-star h2 # Using h2
 
 setState 125 683 074
 solve A-star
@@ -23,6 +23,7 @@ solve beam 5
 setState 867 254 301
 printState
 solve beam 1
+
 
 -------------------------------------
 
@@ -90,12 +91,11 @@ randomizeState 100
 printState
 solve beam 50
 
-# Smaller randomizeState for A* search
-randomizeState 5
+randomizeState 50
 printState
 solve A-star 
 
-randomizeState 10
+randomizeState 50
 printState
 solve A-star h2
 
