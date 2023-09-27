@@ -85,18 +85,18 @@ def solveAStar(heuristic="h1", puzzle="default"):
     while (not open.empty() and (True if (maxNodesLimit == -1 or i < maxNodesLimit) else False)):
         fromQueue = open.get() # get the front node from open queue
         state = fromQueue[1] # puzzle state from the above node
-        g += 1
         i += 1
 
         if numMisplacedTiles(state) == 0: # if goal state reached
             sys.stdout.write("goal reached!\n")
-            return traverseBackMoves(fromQueue)
+            return traverseBackMoves(fromQueue, 0)
 
         # Get all valid future states from the current state
         moves = ["up", "down", "left", "right"]
         for mv in moves: # try moves in all directions
             valid, nextState = move(state, mv)
             if valid: # is a valid movement
+                g = traverseBackMoves(fromQueue, 1) + 1
                 h = numMisplacedTiles(nextState) if heuristic == "h1" else manhattanDistance(nextState)
                 if listSearch(closed, nextState, g+h) < 0: # the same state is not in the closed list w/ smaller f-score
                     open.put((g+h, nextState, fromQueue, mv))
@@ -136,12 +136,12 @@ def manhattanDistance(puzzle):
 # Return 1 if the key exists, -1 if it doesn't in the list
 def listSearch(list, key, f): # closed, nextState, f-score
     for i in list:
-        if i[1] == key and i[0] < f: # same as visited state with lower or same f-score
+        if i[1] == key and i[0] <= f: # same as visited state with lower or same f-score
             return 1
     return -1
 
 # Print out the steps from initial state to goal state
-def traverseBackMoves(state):
+def traverseBackMoves(state, printOut=1):
     moves = list() # moves/directions made from beginning to end
     states = list() # states visited from beginning to end
     parent = state
@@ -151,14 +151,15 @@ def traverseBackMoves(state):
         moves.insert(0, parent[3]) # insert parent's move to the front
         parent = parent[2]
 
-    sys.stdout.write("\nTotal number of moves: " + str(len(moves)-1) + "\n")
-    sys.stdout.write("\nInitial state:\n")
-    printState(states[0])
-    sys.stdout.write("Moves: " + str(moves[1:]) + "\n\n")
-    # Commented under prints out all moves and states to get to the goal
-    # for i in range(1, len(moves)):
-        # sys.stdout.write("\n" + str(i) +") Move " + moves[i] + ":\n")
-        # printState(states[i])
+    if printOut==0:
+        sys.stdout.write("\nTotal number of moves: " + str(len(moves)-1) + "\n")
+        sys.stdout.write("\nInitial state:\n")
+        printState(states[0])
+        sys.stdout.write("Moves: " + str(moves[1:]) + "\n\n")
+        # Commented under prints out all moves and states to get to the goal
+        # for i in range(1, len(moves)):
+        #     sys.stdout.write("\n" + str(i) +") Move " + moves[i] + ":\n")
+        #     printState(states[i])
 
     return len(moves) - 1
         
@@ -180,18 +181,18 @@ def solveBeam(k, puzzle="default"):
     while (not open.empty() and (True if (maxNodesLimit == -1 or i < maxNodesLimit) else False)):
         fromQueue = open.get() # get the front node from open queue
         state = fromQueue[1] # puzzle state from the above node
-        g += 1
         i += 1
 
         if numMisplacedTiles(state) == 0: # if goal state reached
             sys.stdout.write("goal reached!\n")
-            return traverseBackMoves(fromQueue)
+            return traverseBackMoves(fromQueue, 0)
 
         # Get all valid future states from the current state
         moves = ["up", "down", "left", "right"]
         for mv in moves: # try moves in all directions
             valid, nextState = move(state, mv)
             if valid: # is a valid movement
+                g = traverseBackMoves(fromQueue, 1) + 1
                 h = numMisplacedTiles(nextState)
                 if listSearch(closed, nextState, g+h) < 0: # the same state is not in the closed list w/ smaller f-score
                     open.put((g+h, nextState, fromQueue, mv))

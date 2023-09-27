@@ -91,11 +91,11 @@ randomizeState 100
 printState
 solve beam 50
 
-randomizeState 50
+randomizeState 100
 printState
 solve A-star 
 
-randomizeState 50
+randomizeState 100
 printState
 solve A-star h2
 
