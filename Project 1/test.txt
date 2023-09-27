@@ -14,12 +14,15 @@ solve A-star h2
 # All 3 from above beam search
 setState 425 638 071
 solve beam 10
+solve beam 50
 
 setState 018 325 467
 solve beam 10
+solve beam 50
 
 setState 125 683 074
 solve beam 10
+solve beam 50
 
 # Too small of limit (k) could lead to the solution not being found
 setState 867 254 301
@@ -65,20 +68,18 @@ setState 018 325 467
 solve A-star
 
 setState 018 325 467
-solve beam 10
+solve beam 2
 
-maxNodes 1000 # bigger limit
+maxNodes 500 # bigger limit
 
-# 1000 nodes still not enough for beam but for A* search
+# 500 nodes still not enough for beam but for A* search
 setState 018 325 467
 solve A-star
 
 setState 018 325 467
-solve beam 10
+solve beam 2
 
-# Beam search can find a solution to the puzzle above when no maxNodes limit is set
-maxNodes -1 # getting rid of limit
-setState 018 325 467
+setState 018 325 467 # can be solved with bigger k
 solve beam 10
 
 ------------------------------------------
