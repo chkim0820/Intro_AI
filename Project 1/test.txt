@@ -82,6 +82,8 @@ solve beam 2
 setState 018 325 467 # can be solved with bigger k
 solve beam 10
 
+maxNodes -1 # Getting rid of limit
+
 ------------------------------------------
 
 # A* and beam search with random states
