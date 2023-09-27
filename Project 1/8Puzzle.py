@@ -169,7 +169,7 @@ def solveBeam(k, puzzle="default"):
         puzzle = puzzleState
     sys.stdout.write("\nSolving the puzzle using beam search with " + str(k) + " states...\n")
     g = 0 # g(n) = depth of the state from the initial state; initially 0
-    h = numMisplacedTiles(puzzle) # h(n) = heuristic
+    h = manhattanDistance(puzzle) # h(n) = heuristic
     
     open = PriorityQueue() # priority queue containing possible states
     closed = list() # list containing already-visited states
@@ -193,7 +193,7 @@ def solveBeam(k, puzzle="default"):
             valid, nextState = move(state, mv)
             if valid: # is a valid movement
                 g = traverseBackMoves(fromQueue, 1) + 1
-                h = numMisplacedTiles(nextState)
+                h = manhattanDistance(nextState)
                 if listSearch(closed, nextState, g+h) < 0: # the same state is not in the closed list w/ smaller f-score
                     open.put((g+h, nextState, fromQueue, mv))
 
