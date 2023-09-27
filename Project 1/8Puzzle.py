@@ -68,6 +68,7 @@ def randomizeState(n):
 def solveAStar(heuristic="h1", puzzle="default"):
     if puzzle == "default":
         puzzle = puzzleState
+    puzzle = copy.deepcopy(puzzle)
     sys.stdout.write("\nSolving the puzzle using A* search...\n")
     g = 0 # g(n) = depth of the state from the initial state; initially 0
     if (heuristic == "h1"):
@@ -129,7 +130,8 @@ def manhattanDistance(puzzle):
     del copyPuzzle[6]
     for i in range(len(copyPuzzle)): # compare all tiles (1 to 8)
         curTile = int(copyPuzzle[i]) # value of ith tile
-        sum += round(abs(curTile-i)/3) + abs(curTile-i)%3
+        sum += abs(curTile//3 - i//3) + abs(curTile%3 - i%3) # % calculates x/column & // calculates y/row
+        print(abs(curTile//3 - i//3) + abs(curTile%3 - i%3))
     return sum
 
 # Simple list search method for a list containing tuples; search for the input state
@@ -327,6 +329,7 @@ def experimentFour(solA1, solA2, solB):
 
 # Main method
 if __name__ == '__main__':
+
     # allExperiments() # Calls the experiment functions
     
     # Reading the input file from the terminal
