@@ -68,7 +68,6 @@ def randomizeState(n):
 def solveAStar(heuristic="h1", puzzle="default"):
     if puzzle == "default":
         puzzle = puzzleState
-    puzzle = copy.deepcopy(puzzle)
     sys.stdout.write("\nSolving the puzzle using A* search...\n")
     g = 0 # g(n) = depth of the state from the initial state; initially 0
     if (heuristic == "h1"):
@@ -131,14 +130,13 @@ def manhattanDistance(puzzle):
     for i in range(len(copyPuzzle)): # compare all tiles (1 to 8)
         curTile = int(copyPuzzle[i]) # value of ith tile
         sum += abs(curTile//3 - i//3) + abs(curTile%3 - i%3) # % calculates x/column & // calculates y/row
-        print(abs(curTile//3 - i//3) + abs(curTile%3 - i%3))
     return sum
 
 # Simple list search method for a list containing tuples; search for the input state
 # Return 1 if the key exists, -1 if it doesn't in the list
-def listSearch(list, key, f):
+def listSearch(list, key, f): # closed, nextState, f-score
     for i in list:
-        if i[1] == key and i[0] < f:
+        if i[1] == key and i[0] < f: # same as visited state with lower or same f-score
             return 1
     return -1
 
@@ -213,7 +211,6 @@ def cutQueue(k, queue):
     newQueue = PriorityQueue()
     i = 0
     while not queue.empty() and i < k:
-    # while not (queue.empty() or i > k):
         newQueue.put(queue.get())
         i += 1
     return newQueue
