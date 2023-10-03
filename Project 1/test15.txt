@@ -1,0 +1,110 @@
+# A* search
+setState 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 # goal state
+solve A-star
+solve A-star h2
+
+setState 1 5 3 11 4 6 2 0 8 9 7 14 12 13 15 10
+solve A-star
+solve A-star h2
+
+setState 4 1 2 3 8 5 6 7 9 13 10 11 12 0 14 15
+solve A-star
+solve A-star h2
+
+
+# All 3 from above beam search
+setState 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 # goal state
+solve beam 10
+solve beam 50
+
+setState 1 5 3 11 4 6 2 0 8 9 7 14 12 13 15 10
+solve beam 10
+solve beam 50
+
+setState 4 1 2 3 8 5 6 7 9 13 10 11 12 0 14 15
+solve beam 10
+solve beam 50
+
+
+
+-------------------------------------
+
+# Testing other methods
+
+# setState/printState
+setState 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+printState
+setState 4 0 2 3 5 1 6 7 8 9 13 10 12 14 15 11
+printState
+setState 5 4 2 3 8 1 6 7 12 9 10 11 13 0 14 15
+printState
+
+# move
+move left 
+printState
+move left # Invalid movement; no change
+printState
+move up
+printState
+move down
+printState
+move right
+printState
+move down # Invalid movement; no change
+printState
+
+# randomizeState
+randomizeState 3
+printState
+
+randomizeState 10000
+printState
+
+
+-------------------------------------------
+
+# With maxNodes limit; too small for both
+maxNodes 100
+
+setState 6 4 5 2 8 1 3 0 9 13 7 11 12 14 10 15
+solve A-star
+
+setState 6 4 5 2 8 1 3 0 9 13 7 11 12 14 10 15
+solve beam 10
+
+maxNodes 1000 # bigger limit; beam search now works
+
+setState 6 4 5 2 8 1 3 0 9 13 7 11 12 14 10 15
+solve A-star
+
+setState 6 4 5 2 8 1 3 0 9 13 7 11 12 14 10 15
+solve beam 10
+
+maxNodes -1 # can be solved without k
+
+setState 6 4 5 2 8 1 3 0 9 13 7 11 12 14 10 15
+solve A-star
+
+
+
+------------------------------------------
+
+# A* and beam search with random states
+
+randomizeState 100
+printState
+solve beam 1000 # Set to big values for quicker runtime
+
+randomizeState 100
+printState
+solve beam 1000
+
+randomizeState 100
+printState
+solve A-star 
+solve A-star h2
+
+randomizeState 100
+printState
+solve A-star
+solve A-star h2
