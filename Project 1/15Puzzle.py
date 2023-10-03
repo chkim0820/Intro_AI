@@ -340,8 +340,7 @@ def experimentFour(solA1, solA2, solB):
 # Main method
 if __name__ == '__main__':
 
-    allExperiments() # Calls the experiment functions
-    exit()
+    # allExperiments() # Calls the experiment functions
     
     # Reading the input file from the terminal
     if len(sys.argv) < 2:
