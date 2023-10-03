@@ -76,7 +76,7 @@ def randomizeState(n):
                 setState(state)
         return copy.deepcopy(state)
     else:
-        return copy.deepcopy(defaultState)
+        return None
 
 # Solve the puzzle from its current state using A-star search
 def solveAStar(heuristic="h1", puzzle="default"):
@@ -242,28 +242,29 @@ def allExperiments():
 
     # Test different maxNodes limits
     experimentOne(states)
+    maxNodes(-1)
 
     solA1, solA2, solB = searchResults(states, -1) # Saved so the search algorithms run only once
     experimentTwo(solA1, solA2)
     experimentThree(solA1, solA2, solB)
     experimentFour(solA1, solA2, solB)
 
-# For experiment, generate 100 samples of puzzles with 1-50 random moves from goal state
+# For experiment, generate 50 samples of puzzles with 1-50 random moves from goal state
 def generateRandomSamples():
     states = list()
     i = 1
-    while i <= 100: 
-        puzzle = randomizeState(math.ceil(i/2))
+    while i <= 50: 
+        puzzle = randomizeState(i)
         if puzzle not in states:
             states.append(puzzle)
             i += 1
     return states
 
-# Solve the given 100 random states with the given algorithm and other specifications
+# Solve the given 50 random states with the given algorithm and other specifications
 def testSearch(algorithm, states, heuristic=0, limit=-1):
     maxNodes(limit) # set maxNodes limit
     valid = list() # list of solved puzzles
-    for state in states: # for all 100 generated puzzles
+    for state in states: # for all 50 generated puzzles
         numMoves = 0 # number of moves to goal state
         start = time.time()
         if (algorithm==0):
@@ -276,7 +277,7 @@ def testSearch(algorithm, states, heuristic=0, limit=-1):
     maxNodes(-1) # set maxNodes limit back to -1 (no limit)
     return valid
 
-# All three algorithms run on the 100 random puzzles with testSearch function
+# All three algorithms run on the 50 random puzzles with testSearch function
 def searchResults(states, limit=-1):
     solA1 = testSearch(algorithm=0, states=states, heuristic=0, limit=limit)
     solA2 = testSearch(algorithm=0, states=states, heuristic=1, limit=limit)
@@ -290,11 +291,11 @@ def experimentOne(states):
         sys.stdout.write("\nmaxNodes = " + str(i) + "\n")
         a1, a2, b = searchResults(states, limit=i)
         numValid = len(a1)
-        sys.stdout.write("A* search with h1: " + str(numValid) + "/100 = " + str(numValid/100) + "\n")
+        sys.stdout.write("A* search with h1: " + str(numValid) + "/50 = " + str(numValid/50) + "\n")
         numValid = len(a2)
-        sys.stdout.write("A* search with h2: " + str(numValid) + "/100 = " + str(numValid/100) + "\n")
+        sys.stdout.write("A* search with h2: " + str(numValid) + "/50 = " + str(numValid/50) + "\n")
         numValid = len(b)
-        sys.stdout.write("Beam search: " + str(numValid) + "/100 = " + str(numValid/100) + "\n")
+        sys.stdout.write("Beam search: " + str(numValid) + "/50 = " + str(numValid/50) + "\n")
 
 # Determine which heuristic is better; compare runtime since guaranteed optimality & completeness
 def experimentTwo(solA1, solA2):
@@ -304,18 +305,18 @@ def experimentTwo(solA1, solA2):
     sum = 0
     for i in solA1:
         sum += i[2]
-    sys.stdout.write("For A* search with h1, the average runtime over the sample 100 puzzles is " + str(sum/len(solA1)) + "\n") 
+    sys.stdout.write("For A* search with h1, the average runtime over the sample 50 puzzles is " + str(sum/len(solA1)) + "\n") 
 
     sys.stdout.write("h2 (Manhattan distance):\n")
     sum = 0
     for i in solA2:
         sum += i[2]
-    sys.stdout.write("For A* search with h2, the average runtime over the sample 100 puzzles is " + str(sum/len(solA2)) + "\n")  
+    sys.stdout.write("For A* search with h2, the average runtime over the sample 50 puzzles is " + str(sum/len(solA2)) + "\n")  
     
 # Compares the solution length (number of moves from beginning to end) across three algorithms
 def experimentThree(solA1, solA2, solB):
     sys.stdout.write("\nExperiment 3) Variance in solutions' lengths (in number of moves);" +  
-          "The average over solving all solvable puzzles (out of 100) are calculated.\n")
+          "The average over solving all solvable puzzles (out of 50) are calculated.\n")
     sum = 0
     for i in solA1:
         sum += i[0]
@@ -331,15 +332,16 @@ def experimentThree(solA1, solA2, solB):
 
 def experimentFour(solA1, solA2, solB):
     sys.stdout.write("\nExperiment 4) The fraction of solvable puzzles:\n")
-    sys.stdout.write("For A* search with h1: " + str(len(solA1)) + " solved puzzles -> " + str(len(solA1)/100) + "\n")
-    sys.stdout.write("For A* search with h2: " + str(len(solA2)) + " solved puzzles -> " + str(len(solA2)/100) + "\n")
-    sys.stdout.write("For beam search: " + str(len(solB)) + " solved puzzles -> " + str(len(solB)/100) + "\n")
+    sys.stdout.write("For A* search with h1: " + str(len(solA1)) + " solved puzzles -> " + str(len(solA1)/50) + "\n")
+    sys.stdout.write("For A* search with h2: " + str(len(solA2)) + " solved puzzles -> " + str(len(solA2)/50) + "\n")
+    sys.stdout.write("For beam search: " + str(len(solB)) + " solved puzzles -> " + str(len(solB)/50) + "\n")
 
 
 # Main method
 if __name__ == '__main__':
 
-    # allExperiments() # Calls the experiment functions
+    allExperiments() # Calls the experiment functions
+    exit()
     
     # Reading the input file from the terminal
     if len(sys.argv) < 2:
