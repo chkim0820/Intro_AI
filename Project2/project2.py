@@ -9,11 +9,17 @@ import math
 
 
 # Take the first n columns of n-dim data and convert them to vectors (numpy arrays)
-def toVectors(data, dimension):
-    vectorList = [] # For storing vectors for each dimension
+def toVectors(data, dimension, dimNames):
+    vectorList = [] # For storing vectors
+    if (dimNames == None): # If names of dimension columns not specified, choose first n dim.
+        dimNames = data.columns[:dimension]
     # Iterate through all rows in the data frame (all iris data)
-    for i in range(len(data.index)):
-        vector = np.array(data.iloc[i,:dimension]) # extract each vector (X)
+    for i in data.index:
+        vector = np.empty(dimension)
+        j = 0 # For indexing in vector
+        for dim in dimNames:
+            vector[j] = data.loc[i, dim] # extract each vector (X)
+            j += 1
         vectorList.append(vector)
     return vectorList
 
@@ -62,28 +68,47 @@ def objectiveFunction(vectors, means, clusterMap):
 
 
 # K-means clustering algorithm to be applied to the irisdata.csv dataset
-def kMeansClustering(data, numClusters, dimension):
-    D_values = []
-    prevD = -1
-    means = None
+def kMeansClustering(data, numClusters, dimension, retType, dimNames=None):
+    D_values = [] # A list containing the D values for each iteration
+    prevD = -1 # Stores the D value from the previous iteration
+    minD = math.inf # Smallest D occurred
+    means = None # Mean vectors for each cluster; updated
+    clusterMap = None # Maps each value to appropriate clusters
+    listMeans = [] # List of means/centers of clusters for each iteration
+    vectors = toVectors(data, dimension, dimNames) # Parsing data into n-dimensional vectors
+    firstIt = True
+
     # Loop or recursively run the method until D remains the same value for a few iterations
-    while (True):
-        # parse the data into a list of n-dimensional vectors
-        vectors = toVectors(data, dimension)
+    for i in range(100): 
         # calculate the updated mean for the kth cluster
         means, clusterMap = learningAlgo(vectors, means, numClusters, dimension)
         # calculate the objective function D; update belonging-ness to each cluster
         D = objectiveFunction(vectors, means, clusterMap)
-        # Add current iteration's D to the list; to be plotted later
-        D_values.append(D)
-        # Check how D is changing
-        if (D == prevD): # break the loop if D is the same; FIX to maybe less intense threshold
-            break
-        prevD = D # Saving current D for next iteration
-    return D_values
+        if (D > prevD and not firstIt):
+            means = listMeans[-1] # Try again
+        else:
+            listMeans.append(means) # Append calculated means
+            D_values.append(D) # Add current iteration's D to the list
+            # Check how D is changing
+            if (D == prevD): # break the loop if D is the same; FIX to maybe less intense threshold
+                break
+            prevD = D # Saving current D for next iteration
+        firstIt = False
+    
+    # Return appropriate lists
+    if (retType=="D"):
+        return D_values
+    elif (retType=="C"):
+        centers = []
+        lenMeans = len(listMeans) - 1
+        centers.append(listMeans[0])
+        centers.append(listMeans[int(lenMeans/2)])
+        centers.append(listMeans[lenMeans])
+        return vectors, centers, clusterMap
 
 
-def plotGraph(list, filename):
+# For plotting D values
+def plotD(list, filename):
     plt.plot(list, '.-')
     plt.xlabel("Iteration")
     plt.ylabel("Value of Objective Function")
@@ -91,14 +116,25 @@ def plotGraph(list, filename):
     # plt.savefig(filename)
 
 
+# For plotting centers
+def plotCenters(data, centers, map, filename):
+    for i in (range(data.index)):
+        print("hello")
+
+
 # Main method for running the current program
 if __name__ == "__main__":
     data = pd.read_csv('irisdata.csv') # iris dataset to pd data frame; assuming same folder/directory
 
     # Exercise 1b; testing k-means clustering algorithm on irisdata.csv with k=2,3
-    k2Values = kMeansClustering(data, 2, 4) # Learning algorithm on iris dataset; K=2 and 4 dimension
-    plotGraph(k2Values, "Learning_Curve_K2")
-    k3Values = kMeansClustering(data, 3, 4) # Learning algorithm on iris dataset; K=3 and 4 dimension
-    plotGraph(k3Values, "Learning_Curve_K3")
+    k2Values = kMeansClustering(data, 2, 4, retType="D") # Learning algorithm on iris dataset; K=2 and 4 dimension
+    plotD(k2Values, "Learning_Curve_K2")
+    k3Values = kMeansClustering(data, 3, 4, retType="D") # Learning algorithm on iris dataset; K=3 and 4 dimension
+    plotD(k3Values, "Learning_Curve_K3")
 
-    # Exercise 1c;
+    # Exercise 1c; show the initial, intermediate, and converged cluster centers
+    dim = ["petal_length", "petal_width"]
+    cen2Vectors, cen2Values, cen2Maps = kMeansClustering(data, 2, 2, retType="C", dimNames=dim)
+    plotCenters(cen2Vectors, cen2Values, cen2Maps, "Petal_Center_K2")
+    cen3Vectors, cen3Values, cen3Maps = kMeansClustering(data, 3, 2, retType="C", dimNames=dim)
+    plotCenters(cen3Vectors, cen3Values, cen3maps, "Petal_Center_K3")
