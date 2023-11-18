@@ -117,24 +117,44 @@ def plotD(list, filename):
 
 
 # For plotting centers
-def plotCenters(data, centers, map, filename):
-    for i in (range(data.index)):
-        print("hello")
+def plotCenters(vectors, centers, map, filename):
+    df = pd.DataFrame(np.row_stack(vectors))
+    df.insert(len(df.columns), "Cluster", map)
+    # Dataframe for each cluster
+    cluster1 = df.query("Cluster==0", inplace=False)
+    cluster2 = df.query("Cluster==1", inplace=False)
+    cluster3 = df.query("Cluster==2", inplace=False)
+    # Plot for each clusters
+    plt.scatter(cluster1.loc[:,0], cluster1.loc[:,1])
+    plt.scatter(cluster2.loc[:,0], cluster2.loc[:,1])
+    plt.scatter(cluster3.loc[:,0], cluster3.loc[:,1])
+    #Plot for centers
+    # print(list(vector) for vector in centers[0])
+    for center in centers:
+        print(center)
+        for vector in center:
+            plt.scatter(vector[0], vector[1])
+    # Set the axes names
+    plt.xlabel("Petal Length")
+    plt.ylabel("Petal Width")
+    # Plot all vectors based on assigned clusters
+    plt.show()
+    # plt.savefig(filename)
 
 
 # Main method for running the current program
 if __name__ == "__main__":
     data = pd.read_csv('irisdata.csv') # iris dataset to pd data frame; assuming same folder/directory
 
-    # Exercise 1b; testing k-means clustering algorithm on irisdata.csv with k=2,3
-    k2Values = kMeansClustering(data, 2, 4, retType="D") # Learning algorithm on iris dataset; K=2 and 4 dimension
-    plotD(k2Values, "Learning_Curve_K2")
-    k3Values = kMeansClustering(data, 3, 4, retType="D") # Learning algorithm on iris dataset; K=3 and 4 dimension
-    plotD(k3Values, "Learning_Curve_K3")
+    # # Exercise 1b; testing k-means clustering algorithm on irisdata.csv with k=2,3
+    # k2Values = kMeansClustering(data, 2, 4, retType="D") # Learning algorithm on iris dataset; K=2 and 4 dimension
+    # plotD(k2Values, "Learning_Curve_K2")
+    # k3Values = kMeansClustering(data, 3, 4, retType="D") # Learning algorithm on iris dataset; K=3 and 4 dimension
+    # plotD(k3Values, "Learning_Curve_K3")
 
     # Exercise 1c; show the initial, intermediate, and converged cluster centers
     dim = ["petal_length", "petal_width"]
     cen2Vectors, cen2Values, cen2Maps = kMeansClustering(data, 2, 2, retType="C", dimNames=dim)
     plotCenters(cen2Vectors, cen2Values, cen2Maps, "Petal_Center_K2")
     cen3Vectors, cen3Values, cen3Maps = kMeansClustering(data, 3, 2, retType="C", dimNames=dim)
-    plotCenters(cen3Vectors, cen3Values, cen3maps, "Petal_Center_K3")
+    plotCenters(cen3Vectors, cen3Values, cen3Maps, "Petal_Center_K3")
