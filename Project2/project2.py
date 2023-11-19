@@ -106,6 +106,11 @@ def kMeansClustering(data, numClusters, dimension, retType, dimNames=None):
         return vectors, centers, clusterMap
     
 
+def boundaryFunction(x, a1, a2, b1, b2):
+    if (a2 + b2 != 0):
+        y = ((2*a1*x) - (2*a2*x) - a1**2 + a2**2 - b1**2 + b2**2)/(2 * (-b1 + b2))
+    return y
+
 # Calculate the decision boundary based on the calculated means
 def decisionBoundary(means, numClusters):
     xValues = []
@@ -117,17 +122,44 @@ def decisionBoundary(means, numClusters):
     #Find a line where the distance from both centers are equal for all x
     for x in range(8):
         if (numClusters == 2):
-            y =  y1 + ((x - x1) ** 2 - (x - x2) ** 2 + (y2 ** 2 - y1 ** 2)) / (2 * (y2 - y1))
-            # equation = sp.Eq((x1 - x)**2 + (y1 - y)**2, (x2 - x)**2 + (y2 - y)**2)
+            if (y1 + y2 != 0):
+                y = boundaryFunction(x, x1, x2, y1, y2)
+            else:
+                exit("error")
             yValues.append(y)
         elif (numClusters == 3):
-            y12 = y1 + ((x - x1) ** 2 - (x - x2) ** 2 + (y2 ** 2 - y1 ** 2)) / (2 * (y2 - y1))
-            y13 = y1 + ((x - x1) ** 2 - (x - x3) ** 2 + (y3 ** 2 - y1 ** 2)) / (2 * (y3 - y1))
-            y23 = y2 + ((x - x2) ** 2 - (x - x3) ** 2 + (y3 ** 2 - y2 ** 2)) / (2 * (y3 - y2))
+            y12 = boundaryFunction(x, x1, x2, y1, y2)
+            y13 = boundaryFunction(x, x1, x3, y1, y3)
+            y23 = boundaryFunction(x, x2, x3, y2, y3)
             for i in [y12, y13, y23]:
                 yValues.append(i)
         xValues.append(x)
     return xValues, yValues
+
+
+def updateWeight(input, weights, target, N):
+    newWeights = []
+    for i in range(N):
+        if (target[i]=='setosa'):
+            c = 0
+        elif (target[i]=='versicolor'):
+            c = 0.5
+        else:
+            c = 1
+        newWeights.append(weights[i] - (0.1/N) * (np.dot(weights.T, np.array(input)) * c))
+    return np.array(newWeights)
+
+def sigmoidNonlinearNN(data):
+    input = toVectors(data, 2, ['petal_length', 'petal_width'])
+    weights = np.random.randn(len(input), 2) * 0.01
+    bias = 0
+    N = len(input)
+    for i in range(4):
+        # Compute the weighted sum of inputs and bias & apply sigmoid function
+        weightedSum = np.dot(input, weights.T) + bias
+        output = 1 / (1 + np.exp(-weightedSum)) # Sigmoid function
+        weights = updateWeight(input, weights, data['species'], N)
+    return output
 
 
 # For plotting D values
@@ -171,13 +203,31 @@ def plotCenters(vectors, centers, map, numClusters, filename, boundaryX=None, bo
         if (numClusters == 2):
             plt.plot(boundaryX, boundaryY, color="tab:gray", label="Decision Boundary")
         elif (numClusters == 3):
-            plt.plot(boundaryX, boundaryY[::3], color="tab:gray", label="1 & 2")
-            plt.plot(boundaryX, boundaryY[1::3], color="tab:gray", label="1 & 3")
-            plt.plot(boundaryX, boundaryY[2::3], color="tab:gray", label="2 & 3")
+            plt.plot(boundaryX, boundaryY[::3], color="c", label="Cluster 1 & 2")
+            plt.plot(boundaryX, boundaryY[1::3], color="m", label="Cluster 1 & 3")
+            plt.plot(boundaryX, boundaryY[2::3], color="y", label="Cluster 2 & 3")
     # Set the axes names
     plt.xlabel("Petal Length")
     plt.ylabel("Petal Width")
-    # plt.legend()
+    plt.legend()
+    # Plot all vectors based on assigned clusters
+    plt.show()
+    # plt.savefig(filename)
+
+
+# Plotting data of versicolor and virginica classes
+def plotClasses(data):
+    df = pd.DataFrame(data)
+    # Dataframe for each cluster
+    versicolor = df.query("species=='versicolor'", inplace=False)
+    virginica = df.query("species=='virginica'", inplace=False)
+    # Plot for each clusters
+    plt.scatter(versicolor['petal_length'], versicolor['petal_width'], color="tab:blue", label="versicolor")
+    plt.scatter(virginica['petal_length'], virginica['petal_width'], color="tab:orange", label="virginica")
+    # Set the axes names
+    plt.xlabel("Petal Length")
+    plt.ylabel("Petal Width")
+    plt.legend()
     # Plot all vectors based on assigned clusters
     plt.show()
     # plt.savefig(filename)
@@ -187,21 +237,27 @@ def plotCenters(vectors, centers, map, numClusters, filename, boundaryX=None, bo
 if __name__ == "__main__":
     data = pd.read_csv('irisdata.csv') # iris dataset to pd data frame; assuming same folder/directory
 
-    # # Exercise 1b; testing k-means clustering algorithm on irisdata.csv with k=2,3
+    # # Exercise 1b; Test k-means clustering algorithm on irisdata.csv with k=2,3
     # k2Values = kMeansClustering(data, 2, 4, retType="D") # Learning algorithm on iris dataset; K=2 and 4 dimension
     # plotD(k2Values, "Learning_Curve_K2")
     # k3Values = kMeansClustering(data, 3, 4, retType="D") # Learning algorithm on iris dataset; K=3 and 4 dimension
     # plotD(k3Values, "Learning_Curve_K3")
 
-    # Exercise 1c; show the initial, intermediate, and converged cluster centers
-    dim = ["petal_length", "petal_width"]
-    cen2Vectors, cen2Means, cen2Maps = kMeansClustering(data, 2, 2, retType="C", dimNames=dim)
+    # Exercise 1c; Show the initial, intermediate, and converged cluster centers
+    # dim = ["petal_length", "petal_width"]
+    # cen2Vectors, cen2Means, cen2Maps = kMeansClustering(data, 2, 2, retType="C", dimNames=dim)
     # plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2")
-    cen3Vectors, cen3Means, cen3Maps = kMeansClustering(data, 3, 2, retType="C", dimNames=dim)
+    # cen3Vectors, cen3Means, cen3Maps = kMeansClustering(data, 3, 2, retType="C", dimNames=dim)
     # plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3")
 
     # Exercise 1d; Plot decision boundaries; keeping 2 dimension
-    xVal2, yVal2 = decisionBoundary(cen2Means[-1], 2)
-    plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2", xVal2, yVal2)
-    xVal3, yVal3 = decisionBoundary(cen3Means[-1], 3)
-    plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3", xVal3, yVal3)
+    # xVal2, yVal2 = decisionBoundary(cen2Means[-1], 2)
+    # plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2", xVal2, yVal2)
+    # xVal3, yVal3 = decisionBoundary(cen3Means[-1], 3)
+    # plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3", xVal3, yVal3)
+
+    # Exercise 2a; Plot the 2nd and 3rd iris classes
+    # plotClasses(data)
+
+    # Exercise 2b; Define a function that computes the output of simple one-layer neural network using a sigmoid non-linearity
+    sigmoidNonlinearNN(data)
