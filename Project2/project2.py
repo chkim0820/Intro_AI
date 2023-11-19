@@ -3,6 +3,7 @@
 
 import pandas as pd
 import numpy as np
+from decimal import Decimal
 import matplotlib.pyplot as plt
 import random
 import math
@@ -71,7 +72,6 @@ def objectiveFunction(vectors, means, clusterMap):
 def kMeansClustering(data, numClusters, dimension, retType, dimNames=None):
     D_values = [] # A list containing the D values for each iteration
     prevD = -1 # Stores the D value from the previous iteration
-    minD = math.inf # Smallest D occurred
     means = None # Mean vectors for each cluster; updated
     clusterMap = None # Maps each value to appropriate clusters
     listMeans = [] # List of means/centers of clusters for each iteration
@@ -87,14 +87,13 @@ def kMeansClustering(data, numClusters, dimension, retType, dimNames=None):
         if (D > prevD and not firstIt):
             means = listMeans[-1] # Try again
         else:
-            listMeans.append(means) # Append calculated means
-            D_values.append(D) # Add current iteration's D to the list
             # Check how D is changing
             if (D == prevD): # break the loop if D is the same; FIX to maybe less intense threshold
                 break
+            listMeans.append(means.copy()) # Append the calculated means
+            D_values.append(D) # Add current iteration's D to the list
             prevD = D # Saving current D for next iteration
         firstIt = False
-    
     # Return appropriate lists
     if (retType=="D"):
         return D_values
@@ -105,6 +104,30 @@ def kMeansClustering(data, numClusters, dimension, retType, dimNames=None):
         centers.append(listMeans[int(lenMeans/2)])
         centers.append(listMeans[lenMeans])
         return vectors, centers, clusterMap
+    
+
+# Calculate the decision boundary based on the calculated means
+def decisionBoundary(means, numClusters):
+    xValues = []
+    yValues = []
+    x1, y1 = means[0] # 1st cluster
+    x2, y2 = means[1] # 2nd cluster
+    if (numClusters == 3):
+        x3, y3 = means[2] # 3rd cluster
+    #Find a line where the distance from both centers are equal for all x
+    for x in range(8):
+        if (numClusters == 2):
+            y =  y1 + ((x - x1) ** 2 - (x - x2) ** 2 + (y2 ** 2 - y1 ** 2)) / (2 * (y2 - y1))
+            # equation = sp.Eq((x1 - x)**2 + (y1 - y)**2, (x2 - x)**2 + (y2 - y)**2)
+            yValues.append(y)
+        elif (numClusters == 3):
+            y12 = y1 + ((x - x1) ** 2 - (x - x2) ** 2 + (y2 ** 2 - y1 ** 2)) / (2 * (y2 - y1))
+            y13 = y1 + ((x - x1) ** 2 - (x - x3) ** 2 + (y3 ** 2 - y1 ** 2)) / (2 * (y3 - y1))
+            y23 = y2 + ((x - x2) ** 2 - (x - x3) ** 2 + (y3 ** 2 - y2 ** 2)) / (2 * (y3 - y2))
+            for i in [y12, y13, y23]:
+                yValues.append(i)
+        xValues.append(x)
+    return xValues, yValues
 
 
 # For plotting D values
@@ -117,7 +140,7 @@ def plotD(list, filename):
 
 
 # For plotting centers
-def plotCenters(vectors, centers, map, filename):
+def plotCenters(vectors, centers, map, numClusters, filename, boundaryX=None, boundaryY=None):
     df = pd.DataFrame(np.row_stack(vectors))
     df.insert(len(df.columns), "Cluster", map)
     # Dataframe for each cluster
@@ -125,18 +148,36 @@ def plotCenters(vectors, centers, map, filename):
     cluster2 = df.query("Cluster==1", inplace=False)
     cluster3 = df.query("Cluster==2", inplace=False)
     # Plot for each clusters
-    plt.scatter(cluster1.loc[:,0], cluster1.loc[:,1])
-    plt.scatter(cluster2.loc[:,0], cluster2.loc[:,1])
-    plt.scatter(cluster3.loc[:,0], cluster3.loc[:,1])
+    plt.scatter(cluster1.loc[:,0], cluster1.loc[:,1], color="tab:blue")
+    plt.scatter(cluster2.loc[:,0], cluster2.loc[:,1], color="tab:orange")
+    plt.scatter(cluster3.loc[:,0], cluster3.loc[:,1], color="tab:green")
     #Plot for centers
-    # print(list(vector) for vector in centers[0])
+    xValues = []
+    yValues = []
+    colors = ["thistle", "darkviolet", "indigo"]
     for center in centers:
-        print(center)
         for vector in center:
-            plt.scatter(vector[0], vector[1])
+            xValues.append(vector[0])
+            yValues.append(vector[1])
+    plt.scatter(xValues, yValues, c=np.repeat(colors, numClusters))
+    # Name the center plots
+    inc = 2
+    for dim in range(numClusters):
+        plt.text(xValues[dim], yValues[dim], "1")
+        plt.text(xValues[dim + inc], yValues[dim + inc], "2")
+        plt.text(xValues[dim + (inc * 2)], yValues[dim + (inc * 2)], "3")
+    # Plot decision boundaries if they exist
+    if (boundaryX != None and boundaryY != None):
+        if (numClusters == 2):
+            plt.plot(boundaryX, boundaryY, color="tab:gray", label="Decision Boundary")
+        elif (numClusters == 3):
+            plt.plot(boundaryX, boundaryY[::3], color="tab:gray", label="1 & 2")
+            plt.plot(boundaryX, boundaryY[1::3], color="tab:gray", label="1 & 3")
+            plt.plot(boundaryX, boundaryY[2::3], color="tab:gray", label="2 & 3")
     # Set the axes names
     plt.xlabel("Petal Length")
     plt.ylabel("Petal Width")
+    # plt.legend()
     # Plot all vectors based on assigned clusters
     plt.show()
     # plt.savefig(filename)
@@ -154,7 +195,13 @@ if __name__ == "__main__":
 
     # Exercise 1c; show the initial, intermediate, and converged cluster centers
     dim = ["petal_length", "petal_width"]
-    cen2Vectors, cen2Values, cen2Maps = kMeansClustering(data, 2, 2, retType="C", dimNames=dim)
-    plotCenters(cen2Vectors, cen2Values, cen2Maps, "Petal_Center_K2")
-    cen3Vectors, cen3Values, cen3Maps = kMeansClustering(data, 3, 2, retType="C", dimNames=dim)
-    plotCenters(cen3Vectors, cen3Values, cen3Maps, "Petal_Center_K3")
+    cen2Vectors, cen2Means, cen2Maps = kMeansClustering(data, 2, 2, retType="C", dimNames=dim)
+    # plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2")
+    cen3Vectors, cen3Means, cen3Maps = kMeansClustering(data, 3, 2, retType="C", dimNames=dim)
+    # plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3")
+
+    # Exercise 1d; Plot decision boundaries; keeping 2 dimension
+    xVal2, yVal2 = decisionBoundary(cen2Means[-1], 2)
+    plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2", xVal2, yVal2)
+    xVal3, yVal3 = decisionBoundary(cen3Means[-1], 3)
+    plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3", xVal3, yVal3)
