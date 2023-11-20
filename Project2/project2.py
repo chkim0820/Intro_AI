@@ -3,7 +3,6 @@
 
 import pandas as pd
 import numpy as np
-from decimal import Decimal
 import matplotlib.pyplot as plt
 import random
 import math
@@ -137,28 +136,46 @@ def decisionBoundary(means, numClusters):
     return xValues, yValues
 
 
+# For updating the weights
 def updateWeight(input, weights, target, N):
-    newWeights = []
+    newWeights = np.empty(N, dtype='object')
+    epsilon = 0.1 / N
     for i in range(N):
-        if (target[i]=='setosa'):
-            c = 0
-        elif (target[i]=='versicolor'):
-            c = 0.5
+        if (target[target.index[i]]=='versicolor'):
+            c = -1
         else:
             c = 1
-        newWeights.append(weights[i] - (0.1/N) * (np.dot(weights.T, np.array(input)) * c))
+        newWeight = weights[i] - epsilon * np.dot(np.dot(weights[i], input[i]) - c, input[i])
+        newWeights[i] = newWeight
     return np.array(newWeights)
 
+
+# Neural network code that runs the data through the layer
 def sigmoidNonlinearNN(data):
     input = toVectors(data, 2, ['petal_length', 'petal_width'])
-    weights = np.random.randn(len(input), 2) * 0.01
-    bias = 0
-    N = len(input)
-    for i in range(4):
+    N = len(input) # Total number of data
+    weights = np.random.rand(N, 2) # Uniform distribution
+    bias = 1
+    prevTotalSum = math.inf
+    output = []
+    firstIt = True
+    while (True):
+        totalSum = 0
+        output = []
         # Compute the weighted sum of inputs and bias & apply sigmoid function
-        weightedSum = np.dot(input, weights.T) + bias
-        output = 1 / (1 + np.exp(-weightedSum)) # Sigmoid function
+        for i in range(N): # Dot product of weight and input data
+            weightedSum = np.dot(weights[i], input[i])
+            output.append(1 / (1 + np.exp(-weightedSum))) # Sigmoid function; activation
+            totalSum += weightedSum
+        totalSum += bias
+        if (firstIt):
+            print("before:", output) 
+            firstIt = False
+        if (prevTotalSum - totalSum < 0.0001): # FIX
+            break
+        prevTotalSum = totalSum
         weights = updateWeight(input, weights, data['species'], N)
+    print("after: ",output)
     return output
 
 
@@ -260,4 +277,8 @@ if __name__ == "__main__":
     # plotClasses(data)
 
     # Exercise 2b; Define a function that computes the output of simple one-layer neural network using a sigmoid non-linearity
-    sigmoidNonlinearNN(data)
+    input = data.query("species=='versicolor' or species=='virginica'", inplace=False)
+    result = sigmoidNonlinearNN(input)
+
+    # Exercise 2c; Plots decision boundaries for non-linearity above
+    
