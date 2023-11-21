@@ -4,7 +4,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits import mplot3d
+from mpl_toolkits.mplot3d import Axes3D 
 import random
 import math
 
@@ -290,18 +290,12 @@ def plotClasses(data):
 
 
 def surfacePlot3D(data, outputs):
-    x = []
-    y = []
-    # Generate input space
-    for vector in data:
-        x.append(vector[0])
-        y.append(vector[1])
-    z = outputs
-    # Plot the surface
     fig = plt.figure()
+    x = [vector[0] for vector in data]
+    y = [vector[1] for vector in data]
     ax = plt.axes(projection='3d')
-    ax.plot3D(x,y,z)
-
+    ax.plot_trisurf(x, y, np.array(outputs))
+    
     # Label axes and title
     ax.set_xlabel('Petal length')
     ax.set_ylabel('Petal width')

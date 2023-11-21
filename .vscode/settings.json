@@ -10,6 +10,7 @@
         "linalg",
         "meshgrid",
         "setosa",
+        "trisurf",
         "vectormath",
         "virginica",
         "xlabel",
