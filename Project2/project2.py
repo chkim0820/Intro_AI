@@ -151,12 +151,13 @@ def updateWeight(input, weights, target, N):
     return np.array(newWeights)
 
 
-# Neural network code that runs the data through the layer
+# # Neural network code that runs the data through the layer
 def sigmoidNonlinearNN(data):
     input = toVectors(data, 2, ['petal_length', 'petal_width'])
     N = len(input) # Total number of data
     weights = np.random.rand(N, 2) # Uniform distribution
     sums = []
+    badSums = []
     bias = 1
     prevTotalSum = math.inf
     output = []
@@ -168,18 +169,32 @@ def sigmoidNonlinearNN(data):
         for i in range(N): # Dot product of weight and input data
             weightedSum = np.dot(weights[i], input[i])
             sums.append(weightedSum)
+            if (i == 0):
+                badSums.append(weightedSum)
             output.append(1 / (1 + np.exp(-weightedSum))) # Sigmoid function; activation
             totalSum += weightedSum
         totalSum += bias
-        if (prevTotalSum - totalSum < 0.1): # FIX
+        if (prevTotalSum - totalSum < 0.001): # FIX
             break
         prevTotalSum = totalSum
         weights = updateWeight(input, weights, data['species'], N)
-    return input, output
+    return input, output, sums, badSums
 
 
-def meanSquaredError(vectors, results):
-    print("meanSquaredError; work on it!")
+# # Calculate the mean-squared error
+def meanSquaredError(patterns, weightedSums):
+    mse = 0
+    for i in range(len(patterns)):
+        mse += (weightedSums[i] - (-1 if patterns[i]=='versicolor' else 1))**2
+    mse = 1/2 * mse
+    return mse
+
+
+# Comparing good and bad weight samples
+def compareMSE(weightedSums, badWeightedSums, patterns):
+    goodMSE = meanSquaredError(patterns, weightedSums)
+    badMSE = meanSquaredError(patterns, badWeightedSums)
+    return goodMSE, badMSE
 
 
 # For plotting D values
@@ -333,13 +348,16 @@ if __name__ == "__main__":
 
     # Exercise 2b; Define a function that computes the output of simple one-layer neural network using a sigmoid non-linearity
     input = data.query("species=='versicolor' or species=='virginica'", inplace=False)
-    points, result = sigmoidNonlinearNN(input)
+    points, result, weightedSums, badWeightedSums = sigmoidNonlinearNN(input)
 
     # # Exercise 2c, e; Plots decision boundaries for non-linearity above
     # plotNNDecisionBoundary(points, result)
 
     # Exercise 2d; 3D surface plot of output over the input space
-    surfacePlot3D(points, result)
+    # surfacePlot3D(points, result)
 
     # Exercise 3a; mean-squared error calculation
-    meanSquaredError(points, result)
+    mse = meanSquaredError(input['species'].tolist(), weightedSums)
+
+    # Exercise 3b; compare MSE for good and bad weights
+    goodMSE, badMSE = compareMSE(weightedSums, badWeightedSums, input['species'].tolist())
