@@ -143,12 +143,30 @@ def updateWeight(input, weights, target, N):
     epsilon = 0.1 / N
     for i in range(N):
         if (target[target.index[i]]=='versicolor'):
-            c = -1
+            c = 0
         else:
             c = 1
         newWeight = weights[i] - epsilon * np.dot(np.dot(weights[i], input[i]) - c, input[i])
         newWeights[i] = newWeight
     return np.array(newWeights)
+
+
+def updateBias(oldBiases, weightSums, target, N):
+    newBiases = np.empty(N)
+    epsilon = 0.1 / N
+    for i in range(N):
+        if (target[target.index[i]]=='versicolor'):
+            c = 0
+        else:
+            c = 1
+        newBias = oldBiases[i] - epsilon * (weightSums[i] - c)
+        newBiases[i] = newBias
+    return newBiases
+
+
+# For sigmoid function
+def sigmoid(x):
+    return 1 / (1 + np.exp(x))
 
 
 # # Neural network code that runs the data through the layer
@@ -158,7 +176,7 @@ def sigmoidNonlinearNN(data):
     weights = np.random.rand(N, 2) # Uniform distribution
     sums = []
     badSums = []
-    bias = 1
+    biases = np.ones(N) # UPDATE RULE; FIX
     prevTotalSum = math.inf
     output = []
     while (True):
@@ -171,22 +189,23 @@ def sigmoidNonlinearNN(data):
             sums.append(weightedSum)
             if (i == 0):
                 badSums.append(weightedSum)
-            output.append(1 / (1 + np.exp(-weightedSum))) # Sigmoid function; activation
+            output.append(sigmoid(-weightedSum + biases[i])) # Sigmoid function; activation
             totalSum += weightedSum
-        totalSum += bias
-        if (prevTotalSum - totalSum < 0.001): # FIX
+            totalSum += biases[i]
+        if (prevTotalSum - totalSum < 0.01): # FIX
             break
         prevTotalSum = totalSum
         weights = updateWeight(input, weights, data['species'], N)
-    return input, output, sums, badSums
+        biases = updateBias(biases, sums, data['species'], N)
+    return input, output, sums, badSums, biases, weights
 
 
 # # Calculate the mean-squared error
 def meanSquaredError(patterns, weightedSums):
     mse = 0
     for i in range(len(patterns)):
-        mse += (weightedSums[i] - (-1 if patterns[i]=='versicolor' else 1))**2
-    mse = 1/2 * mse
+        mse += (weightedSums[i] - (patterns[i]))**2
+    mse = 1/len(patterns) * mse
     return mse
 
 
@@ -195,6 +214,20 @@ def compareMSE(weightedSums, badWeightedSums, patterns):
     goodMSE = meanSquaredError(patterns, weightedSums)
     badMSE = meanSquaredError(patterns, badWeightedSums)
     return goodMSE, badMSE
+
+
+# For summed gradients
+def summedGradient(data, biases, sums, patterns):
+    grad1 = 0
+    grad2 = 0
+    N = len(data)
+    for i in range(N):
+        sig = sigmoid(sums[i] + biases[i])
+        gradient = (sig - patterns[i]) * (sig * (1 - sig)) * data[i]
+        grad1 += gradient[0] / N
+        grad2 += gradient[1] / N
+    gradients = [grad1, grad2]
+    return gradients
 
 
 # For plotting D values
@@ -250,7 +283,7 @@ def plotCenters(vectors, centers, map, numClusters, filename, boundaryX=None, bo
     # plt.savefig(filename)
 
 
-def plotNNDecisionBoundary(data, result):
+def plotNNDecisionBoundary(data, result, weights=None, biases=None):
     versicolorX = []
     versicolorY = []
     virginicaX = []
@@ -268,19 +301,35 @@ def plotNNDecisionBoundary(data, result):
     plt.scatter(virginicaX, virginicaY, color="tab:orange", label="virginica")
 
     # Plotting the decision boundary
-    slope = -0.5
     xCoor = []
     yCoor = []
-    for x in range(3, 8):
-        xCoor.append(x)
-        yCoor.append((slope * x) + 4.1)
-    plt.plot(xCoor, yCoor, label='Boundary')
+    if (weights == None):
+        slope = -0.5
+        for x in range(3, 8):
+            xCoor.append(x)
+            yCoor.append((slope * x) + 4.1)
+    else:
+        slope = 0
+        yInt = 0
+        w1, w2, b = 0
+        for i in range(len(weights)):
+            print(weights)
+            print(weights[i][0], weights[i][1], biases[i])
+            exit()
+            slope -= weights[i][0] / weights[i][1]
+            # yInt += biases[i] / weights[i][1]
+        # slope = -1 * (w1 / w2) 
+        slope = slope / len(weights)
+        yInt = (b / w2) / len(weights)
+        for x in range(3, 8):
+            xCoor.append(x)
+            yCoor.append((x * slope + yInt))    
 
+    plt.plot(xCoor, yCoor, label='Boundary')
     # Set the axes names
     plt.xlabel("Petal Length")
     plt.ylabel("Petal Width")
     plt.legend()
-
     # Plot all vectors based on assigned clusters
     plt.show()
     # plt.savefig(filename)        
@@ -324,7 +373,7 @@ def surfacePlot3D(data, outputs):
 if __name__ == "__main__":
     data = pd.read_csv('irisdata.csv') # iris dataset to pd data frame; assuming same folder/directory
 
-    # # # Exercise 1b; Test k-means clustering algorithm on irisdata.csv with k=2,3
+    # # Exercise 1b; Test k-means clustering algorithm on irisdata.csv with k=2,3
     # k2Values = kMeansClustering(data, 2, 4, retType="D") # Learning algorithm on iris dataset; K=2 and 4 dimension
     # plotD(k2Values, "Learning_Curve_K2")
     # k3Values = kMeansClustering(data, 3, 4, retType="D") # Learning algorithm on iris dataset; K=3 and 4 dimension
@@ -348,16 +397,23 @@ if __name__ == "__main__":
 
     # Exercise 2b; Define a function that computes the output of simple one-layer neural network using a sigmoid non-linearity
     input = data.query("species=='versicolor' or species=='virginica'", inplace=False)
-    points, result, weightedSums, badWeightedSums = sigmoidNonlinearNN(input)
+    points, result, weightedSums, badWeightedSums, biases, weights = sigmoidNonlinearNN(input)
 
-    # # Exercise 2c, e; Plots decision boundaries for non-linearity above
-    # plotNNDecisionBoundary(points, result)
+    # Exercise 2c, e; Plots decision boundaries for non-linearity above
+    plotNNDecisionBoundary(points, result)
 
-    # Exercise 2d; 3D surface plot of output over the input space
+    # # Exercise 2d; 3D surface plot of output over the input space
     # surfacePlot3D(points, result)
 
-    # Exercise 3a; mean-squared error calculation
-    mse = meanSquaredError(input['species'].tolist(), weightedSums)
+    # # Exercise 3a; mean-squared error calculation
+    patterns = []
+    for species in input['species'].tolist():
+        patterns.append(0 if (species=='versicolor') else 1)
+    # mse = meanSquaredError(patterns, weightedSums)
 
-    # Exercise 3b; compare MSE for good and bad weights
-    goodMSE, badMSE = compareMSE(weightedSums, badWeightedSums, input['species'].tolist())
+    # # Exercise 3b; compare MSE for good and bad weights
+    # goodMSE, badMSE = compareMSE(weightedSums, badWeightedSums, patterns)
+
+    # Exercise 3e; computes the summed gradient & plot how the decision boundary changes for a small step
+    gradients = summedGradient(points, biases, weightedSums, patterns)
+    plotNNDecisionBoundary(points, result, weights, biases)
