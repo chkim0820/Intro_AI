@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
 import random
 import math
 
@@ -155,28 +156,30 @@ def sigmoidNonlinearNN(data):
     input = toVectors(data, 2, ['petal_length', 'petal_width'])
     N = len(input) # Total number of data
     weights = np.random.rand(N, 2) # Uniform distribution
+    sums = []
     bias = 1
     prevTotalSum = math.inf
     output = []
-    firstIt = True
     while (True):
         totalSum = 0
-        output = []
+        output.clear()
+        sums.clear()
         # Compute the weighted sum of inputs and bias & apply sigmoid function
         for i in range(N): # Dot product of weight and input data
             weightedSum = np.dot(weights[i], input[i])
+            sums.append(weightedSum)
             output.append(1 / (1 + np.exp(-weightedSum))) # Sigmoid function; activation
             totalSum += weightedSum
         totalSum += bias
-        if (firstIt):
-            print("before:", output) 
-            firstIt = False
-        if (prevTotalSum - totalSum < 0.0001): # FIX
+        if (prevTotalSum - totalSum < 0.1): # FIX
             break
         prevTotalSum = totalSum
         weights = updateWeight(input, weights, data['species'], N)
-    print("after: ",output)
-    return output
+    return input, output
+
+
+def meanSquaredError(vectors, results):
+    print("meanSquaredError; work on it!")
 
 
 # For plotting D values
@@ -232,12 +235,47 @@ def plotCenters(vectors, centers, map, numClusters, filename, boundaryX=None, bo
     # plt.savefig(filename)
 
 
+def plotNNDecisionBoundary(data, result):
+    versicolorX = []
+    versicolorY = []
+    virginicaX = []
+    virginicaY = []
+
+    # Directing each point to appropriate classes based on NN result
+    for i in range(len(result)):
+        if (result[i] < 0.5):
+            versicolorX.append(data[i][0])
+            versicolorY.append(data[i][1])
+        else:
+            virginicaX.append(data[i][0])
+            virginicaY.append(data[i][1])
+    plt.scatter(versicolorX, versicolorY, label="versicolor")
+    plt.scatter(virginicaX, virginicaY, color="tab:orange", label="virginica")
+
+    # Plotting the decision boundary
+    slope = -0.5
+    xCoor = []
+    yCoor = []
+    for x in range(3, 8):
+        xCoor.append(x)
+        yCoor.append((slope * x) + 4.1)
+    plt.plot(xCoor, yCoor, label='Boundary')
+
+    # Set the axes names
+    plt.xlabel("Petal Length")
+    plt.ylabel("Petal Width")
+    plt.legend()
+
+    # Plot all vectors based on assigned clusters
+    plt.show()
+    # plt.savefig(filename)        
+
+
 # Plotting data of versicolor and virginica classes
 def plotClasses(data):
-    df = pd.DataFrame(data)
     # Dataframe for each cluster
-    versicolor = df.query("species=='versicolor'", inplace=False)
-    virginica = df.query("species=='virginica'", inplace=False)
+    versicolor = data.query("species=='versicolor'", inplace=False)
+    virginica = data.query("species=='virginica'", inplace=False)
     # Plot for each clusters
     plt.scatter(versicolor['petal_length'], versicolor['petal_width'], color="tab:blue", label="versicolor")
     plt.scatter(virginica['petal_length'], virginica['petal_width'], color="tab:orange", label="virginica")
@@ -245,40 +283,69 @@ def plotClasses(data):
     plt.xlabel("Petal Length")
     plt.ylabel("Petal Width")
     plt.legend()
+
     # Plot all vectors based on assigned clusters
     plt.show()
     # plt.savefig(filename)
+
+
+def surfacePlot3D(data, outputs):
+    x = []
+    y = []
+    # Generate input space
+    for vector in data:
+        x.append(vector[0])
+        y.append(vector[1])
+    z = outputs
+    # Plot the surface
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot3D(x,y,z)
+
+    # Label axes and title
+    ax.set_xlabel('Petal length')
+    ax.set_ylabel('Petal width')
+    ax.set_zlabel('Neural Network Output')
+    ax.set_title('Neural Network Output over Input Space')
+
+    plt.show()
 
 
 # Main method for running the current program
 if __name__ == "__main__":
     data = pd.read_csv('irisdata.csv') # iris dataset to pd data frame; assuming same folder/directory
 
-    # # Exercise 1b; Test k-means clustering algorithm on irisdata.csv with k=2,3
+    # # # Exercise 1b; Test k-means clustering algorithm on irisdata.csv with k=2,3
     # k2Values = kMeansClustering(data, 2, 4, retType="D") # Learning algorithm on iris dataset; K=2 and 4 dimension
     # plotD(k2Values, "Learning_Curve_K2")
     # k3Values = kMeansClustering(data, 3, 4, retType="D") # Learning algorithm on iris dataset; K=3 and 4 dimension
     # plotD(k3Values, "Learning_Curve_K3")
 
-    # Exercise 1c; Show the initial, intermediate, and converged cluster centers
+    # # Exercise 1c; Show the initial, intermediate, and converged cluster centers
     # dim = ["petal_length", "petal_width"]
     # cen2Vectors, cen2Means, cen2Maps = kMeansClustering(data, 2, 2, retType="C", dimNames=dim)
     # plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2")
     # cen3Vectors, cen3Means, cen3Maps = kMeansClustering(data, 3, 2, retType="C", dimNames=dim)
     # plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3")
 
-    # Exercise 1d; Plot decision boundaries; keeping 2 dimension
+    # # Exercise 1d; Plot decision boundaries; keeping 2 dimension
     # xVal2, yVal2 = decisionBoundary(cen2Means[-1], 2)
     # plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2", xVal2, yVal2)
     # xVal3, yVal3 = decisionBoundary(cen3Means[-1], 3)
     # plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3", xVal3, yVal3)
 
-    # Exercise 2a; Plot the 2nd and 3rd iris classes
+    # # Exercise 2a; Plot the 2nd and 3rd iris classes
     # plotClasses(data)
 
     # Exercise 2b; Define a function that computes the output of simple one-layer neural network using a sigmoid non-linearity
     input = data.query("species=='versicolor' or species=='virginica'", inplace=False)
-    result = sigmoidNonlinearNN(input)
+    points, result = sigmoidNonlinearNN(input)
 
-    # Exercise 2c; Plots decision boundaries for non-linearity above
-    
+    # # Exercise 2c, e; Plots decision boundaries for non-linearity above
+    # plotNNDecisionBoundary(points, result)
+
+    # Exercise 2d; 3D surface plot of output over the input space
+    surfacePlot3D(points, result)
+
+    # Exercise 3a; mean-squared error calculation
+    meanSquaredError(points, result)

@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "Coor",
         "darkviolet",
         "Dataframe",
         "dtype",
@@ -7,10 +8,12 @@
         "iloc",
         "irisdata",
         "linalg",
+        "meshgrid",
         "setosa",
         "vectormath",
         "virginica",
         "xlabel",
-        "ylabel"
+        "ylabel",
+        "zlabel"
     ]
 }
