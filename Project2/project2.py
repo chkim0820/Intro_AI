@@ -201,8 +201,6 @@ def sigmoidNonlinearNN(data, patterns=None, iter=None):
             if (it > 2 and (mse[-1] < 0.05)): # Stopping condition
                 break
         it += 1
-    # print(mse)
-    print(predictions)
     if (iter==None):
         return input, predictions, sums, badSums, bias, weight, badWeight, mse
     else:
@@ -365,28 +363,28 @@ def surfacePlot3D(data, outputs):
 if __name__ == "__main__":
     data = pd.read_csv('irisdata.csv') # iris dataset to pd data frame; assuming same folder/directory
 
-    # # Exercise 1b; Test k-means clustering algorithm on irisdata.csv with k=2,3
-    # print("Plotting results of k-means clustering with k=2")
-    # k2Values = kMeansClustering(data, 2, 4, retType="D") # Learning algorithm on iris dataset; K=2 and 4 dimension
-    # plotD(k2Values, "Learning_Curve_K2")
-    # print("Plotting results of k-means clustering with k=3")
-    # k3Values = kMeansClustering(data, 3, 4, retType="D") # Learning algorithm on iris dataset; K=3 and 4 dimension
-    # plotD(k3Values, "Learning_Curve_K3")
-    # # Exercise 1c; Show the initial, intermediate, and converged cluster centers
-    # dim = ["petal_length", "petal_width"]
-    # cen2Vectors, cen2Means, cen2Maps = kMeansClustering(data, 2, 2, retType="C", dimNames=dim)
-    # print("Plotting converged cluster centers throughout for k=2")
-    # plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2")
-    # cen3Vectors, cen3Means, cen3Maps = kMeansClustering(data, 3, 2, retType="C", dimNames=dim)
-    # print("Plotting converged cluster centers throughout for k=3")
-    # plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3")
-    # # Exercise 1d; Plot decision boundaries; keeping 2 dimension
-    # xVal2, yVal2 = decisionBoundary(cen2Means[-1], 2)
-    # print("Plotting decision boundary for k=2")
-    # plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2", xVal2, yVal2)
-    # xVal3, yVal3 = decisionBoundary(cen3Means[-1], 3)
-    # print("Plotting decision boundary for k=3")
-    # plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3", xVal3, yVal3)
+    # Exercise 1b; Test k-means clustering algorithm on irisdata.csv with k=2,3
+    print("Plotting results of k-means clustering with k=2")
+    k2Values = kMeansClustering(data, 2, 4, retType="D") # Learning algorithm on iris dataset; K=2 and 4 dimension
+    plotD(k2Values, "Learning_Curve_K2")
+    print("Plotting results of k-means clustering with k=3")
+    k3Values = kMeansClustering(data, 3, 4, retType="D") # Learning algorithm on iris dataset; K=3 and 4 dimension
+    plotD(k3Values, "Learning_Curve_K3")
+    # Exercise 1c; Show the initial, intermediate, and converged cluster centers
+    dim = ["petal_length", "petal_width"]
+    cen2Vectors, cen2Means, cen2Maps = kMeansClustering(data, 2, 2, retType="C", dimNames=dim)
+    print("Plotting converged cluster centers throughout for k=2")
+    plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2")
+    cen3Vectors, cen3Means, cen3Maps = kMeansClustering(data, 3, 2, retType="C", dimNames=dim)
+    print("Plotting converged cluster centers throughout for k=3")
+    plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3")
+    # Exercise 1d; Plot decision boundaries; keeping 2 dimension
+    xVal2, yVal2 = decisionBoundary(cen2Means[-1], 2)
+    print("Plotting decision boundary for k=2")
+    plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2", xVal2, yVal2)
+    xVal3, yVal3 = decisionBoundary(cen3Means[-1], 3)
+    print("Plotting decision boundary for k=3")
+    plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3", xVal3, yVal3)
 
     # Exercise 2a; Plot the 2nd and 3rd iris classes
     print("Plotting classes for the 2nd and the 3rd classes")
@@ -426,4 +424,3 @@ if __name__ == "__main__":
     plotD(mse, "NNLearningCurve")
     print("Printing 3D surface plot")
     surfacePlot3D(points, results)
-    print(weight, bias)
