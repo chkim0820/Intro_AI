@@ -172,15 +172,17 @@ def sigmoidNonlinearNN(data, patterns=None, iter=None):
     N = len(input) # Total number of data
     weight = np.random.rand(2) # Uniform distribution
     weights = np.empty(N, dtype='object')
-    sums = [] # Dot product of each input and weight
-    badSums = [] # For the first iteration
     predictions = [] # Saves the value after sigmoid; for identification purpose later
+    badMSE = 0
+    goodMSE = 0
     badWeight = None # Placeholder for first iteration's weight
-    bias = 1 
+    midWeight = None
+    bias = 1
+    midBias = 1
+    badBias = 1
     mse = [] # List containing mean squared error of each iteration
     it = 0
     while (True if (iter==None) else it < iter + 1):
-        sums.clear()
         predictions.clear()
         # Compute the weighted sum of inputs and bias & apply sigmoid function
         for i in range(N): # Dot product of weight and input data
@@ -191,20 +193,24 @@ def sigmoidNonlinearNN(data, patterns=None, iter=None):
                 weights[i] = weight
             weightedSum = np.dot(input[i], weight)
             predictions.append(sigmoid(weightedSum + bias))
-            sums.append(weightedSum)
         if (it == 0): # For saving "bad" results; earlier iterations
-            badSums = sums
             badWeight = weight
-            print(predictions)
+            badBias = bias
         if (patterns != None):
             mse.append(meanSquaredError(patterns, predictions))
-            if (it > 2 and (mse[-1] < 0.05)): # Stopping condition
-                break
+            if (it > 2):
+                if (it == 3):
+                    badMSE = mse[-1]
+                if (mse[-1] < 0.05): # Stopping condition
+                    goodMSE = mse[-1]
+                    break
+                if (mse[-1] > 0.3):
+                    midWeight = weight
+                    midBias = bias
         it += 1
-    if (iter==None):
-        return input, predictions, sums, badSums, bias, weight, badWeight, mse
-    else:
-        return input, predictions, sums, badSums, bias, weight, badWeight
+    if (goodMSE == 0 and len(mse) > 1):
+        goodMSE = mse[-1]
+    return input, predictions, badMSE, goodMSE, bias, midBias, badBias, weight, midWeight, badWeight, mse
 
 
 # # Calculate the mean-squared error
@@ -386,41 +392,54 @@ if __name__ == "__main__":
     print("Plotting decision boundary for k=3")
     plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3", xVal3, yVal3)
 
+
     # Exercise 2a; Plot the 2nd and 3rd iris classes
     print("Plotting classes for the 2nd and the 3rd classes")
     plotClasses(data)
     # Exercise 2b; Define a function that computes the output of simple one-layer neural network using a sigmoid non-linearity
     input = data.query("species=='versicolor' or species=='virginica'", inplace=False)
-    points, results, weightedSums, badWeightedSums, bias, weight, badWeight = sigmoidNonlinearNN(input, iter=0)
+    patterns = []
+    for species in input['species'].tolist():
+        patterns.append(0 if (species=='versicolor') else 1)
+    points, results, badMSE, goodMSE, bias, midBias, badBias, weight, midWeight, badWeight, mse = sigmoidNonlinearNN(input, iter=0)
     # Exercise 2c, e; Plots decision boundaries for non-linearity above
     print("Plotting results of the neural networks no iteration")
     plotNNDecisionBoundary(points, results, weight, bias)
     # Exercise 2d; 3D surface plot of output over the input space
     print("Printing 3D surface plot")
     surfacePlot3D(points, results)
+    # Exercise 2e; show the results and compare the points
+    # for i in range(len(results)):
+    #     print(results[i], patterns[i])
+
 
     # Exercise 3a; mean-squared error calculation
-    patterns = []
-    for species in input['species'].tolist():
-        patterns.append(0 if (species=='versicolor') else 1)
-    points, results, weightedSums, badWeightedSums, bias, weight, badWeight = sigmoidNonlinearNN(input, patterns, iter=50)
-    mse = meanSquaredError(patterns, weightedSums)
+    points, results, badMSE, goodMSE, bias, midBias, badBias, weight, midWeight, badWeight, mse = sigmoidNonlinearNN(input, patterns, iter=50)
+    mse = meanSquaredError(patterns, results)
     # Exercise 3b; compare MSE for good and bad weight
-    goodMSE, badMSE = compareMSE(weightedSums, badWeightedSums, patterns)
+    # goodMSE, badMSE = compareMSE(results, badMSE, patterns)
+    print("Good and bad MSE", goodMSE, badMSE)
     # Exercise 3e; computes the summed gradient & plot how the decision boundary changes for a small step; FIX?
-    gradients = summedGradient(points, bias, weightedSums, patterns)
+    gradients = summedGradient(points, bias, results, patterns)
     print("Plotting good weight")
     plotNNDecisionBoundary(points, results, weight, bias, False)
     print("Plotting bad weight; no gradient")
-    plotNNDecisionBoundary(points, results, badWeight, bias, False)
+    plotNNDecisionBoundary(points, results, badWeight, badBias, False)
 
 
     # Exercise 4a; gradient descent
-    points, results, weightedSums, badWeightedSums, bias, weight, badWeight, mse = sigmoidNonlinearNN(input, patterns)
+    points, results, badMSE, goodMSE, bias, midBias, badBias, weight, midWeight, badWeight, mse = sigmoidNonlinearNN(input, patterns)
     # Exercise 4b; decision boundary & learning curve
     print("Plotting for running gradients multiple times")
     plotNNDecisionBoundary(points, results, weight, bias, False)
+    print("Plotting bad weight; no gradient")
+    plotNNDecisionBoundary(points, results, badWeight, badBias, False)
+    print("Plotting bad weight; no gradient")
+    plotNNDecisionBoundary(points, results, midWeight, midBias, False)
     print("Plotting the learning curve for full gradient descents")
     plotD(mse, "NNLearningCurve")
     print("Printing 3D surface plot")
     surfacePlot3D(points, results)
+    # For 2e data
+    # for i in range(len(results)):
+    #     print(results[i], patterns[i])
