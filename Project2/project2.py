@@ -138,31 +138,27 @@ def decisionBoundary(means, numClusters):
 
 
 # For updating the weight
-def updateWeight(input, weight, target, bias, N):
-    newWeight = np.empty(2)
+def updateWeight(weight, input, target, bias, N):
     epsilon = 0.1 / N
-    for i in range(N):
-        if (target[target.index[i]]=='versicolor'):
-            c = 0
-        else:
-            c = 1
-        sig = sigmoid(np.dot(weight, input[i]) + bias)
-        newWeight += (sig - c) * (sig * (1 - sig)) * input[i]
-    return weight - (epsilon * newWeight)
+    if (target=='versicolor'):
+        c = 0
+    else:
+        c = 1
+    sig = sigmoid(np.dot(weight, input) + bias)
+    newWeight = weight - (epsilon * (sig - c) * (sig * (1 - sig)) * input)
+    return  newWeight
 
 
 # For updating bias
-def updateBias(oldBias, sums, target, N):
-    newBias = 0
+def updateBias(oldBias, sum, target, N):
     epsilon = 0.1 / N
-    for i in range(N):
-        if (target[target.index[i]]=='versicolor'):
-            c = 0
-        else:
-            c = 1
-        sig = sigmoid(sums[i] + oldBias)
-        newBias += (sig - c) * (sig * (1 - sig)) 
-    return oldBias - (epsilon * newBias)
+    if (target=='versicolor'):
+        c = 0
+    else:
+        c = 1
+    sig = sigmoid(sum + oldBias)
+    newBias = oldBias - (epsilon * (sig - c) * (sig * (1 - sig)))
+    return newBias
 
 
 # For sigmoid function
@@ -175,50 +171,50 @@ def sigmoidNonlinearNN(data, patterns=None, iter=None):
     input = toVectors(data, 2, ['petal_length', 'petal_width'])
     N = len(input) # Total number of data
     weight = np.random.rand(2) # Uniform distribution
+    weights = np.empty(N, dtype='object')
     sums = [] # Dot product of each input and weight
     badSums = [] # For the first iteration
-    output = [] # Saves the value after sigmoid; for identification purpose later
-    badWeight = np.empty(2) # Placeholder for first iteration's weight
+    predictions = [] # Saves the value after sigmoid; for identification purpose later
+    badWeight = None # Placeholder for first iteration's weight
     bias = 1 
     mse = [] # List containing mean squared error of each iteration
     it = 0
-    totalPrevSum = math.inf
     while (True if (iter==None) else it < iter + 1):
-        totalSum = 0
         sums.clear()
-        output.clear()
+        predictions.clear()
         # Compute the weighted sum of inputs and bias & apply sigmoid function
         for i in range(N): # Dot product of weight and input data
-            weightedSum = np.dot(weight, input[i])
-            output.append(sigmoid(weightedSum))
+            if (iter == None or (iter != None and it < iter)):
+                species = data['species'].tolist()[i]
+                bias = updateBias(bias, np.dot(input[i], weight), species, N)
+                weight = updateWeight(weight, input[i], species, bias, N)
+                weights[i] = weight
+            weightedSum = np.dot(input[i], weight)
+            predictions.append(sigmoid(weightedSum + bias))
             sums.append(weightedSum)
-            totalSum += weightedSum
-        if (it == 0):
+        if (it == 0): # For saving "bad" results; earlier iterations
             badSums = sums
             badWeight = weight
-            print(output)
+            print(predictions)
         if (patterns != None):
-            mse.append(meanSquaredError(patterns, sums))
-        if (mse[-1] < 0.13):
-            break
-        weight = updateWeight(input, weight, data['species'], bias, N)
-        bias = updateBias(bias, sums, data['species'], N)
+            mse.append(meanSquaredError(patterns, predictions))
+            if (it > 2 and (mse[-1] < 0.05)): # Stopping condition
+                break
         it += 1
-        totalPrevSum = totalSum
     # print(mse)
-    print(output)
+    print(predictions)
     if (iter==None):
-        return input, output, sums, badSums, bias, weight, badWeight, mse
+        return input, predictions, sums, badSums, bias, weight, badWeight, mse
     else:
-        return input, output, sums, badSums, bias, weight, badWeight
+        return input, predictions, sums, badSums, bias, weight, badWeight
 
 
 # # Calculate the mean-squared error
-def meanSquaredError(patterns, weightedSums):
+def meanSquaredError(patterns, predictions):
     mse = 0
     for i in range(len(patterns)):
-        mse += (weightedSums[i] - (patterns[i]))**2
-    mse = 1/len(patterns) * mse
+        mse += np.square(predictions[i] - patterns[i])
+    mse = mse / len(patterns)
     return mse
 
 
@@ -297,7 +293,7 @@ def plotCenters(vectors, centers, map, numClusters, filename, boundaryX=None, bo
 
 
 # For plotting the NN decision boundary
-def plotNNDecisionBoundary(data, result, weight=None, bias=None):
+def plotNNDecisionBoundary(data, result, weight=None, bias=None, simple=True):
     versicolorX = []
     versicolorY = []
     virginicaX = []
@@ -314,16 +310,14 @@ def plotNNDecisionBoundary(data, result, weight=None, bias=None):
     plt.scatter(versicolorX, versicolorY, label="versicolor")
     plt.scatter(virginicaX, virginicaY, color="tab:orange", label="virginica")
 
-    # Plotting the decision boundary
-    xCoor = []
-    yCoor = []
-    slope = -1 * (weight[0] / weight[1])
-    yInt = bias / weight[1]
-    for x in range(3, 8):
-        xCoor.append(x)
-        yCoor.append((x * slope + yInt))    
-
-    plt.plot(xCoor, yCoor, label='Boundary')
+    # Determine the points along the boundary
+    x = np.linspace(3, 7, 100) # x data limit
+    if (simple==True):
+        y = (-0.95 * x + 12.45) / 4.75
+    else:
+        y = (-weight[0] * x - bias)/(weight[1]) #generate corresponding point
+        
+    plt.plot(x, y, label='Decision Boundary', color='tab:gray') #plot the point
     # Set the axes names
     plt.xlabel("Petal Length")
     plt.ylabel("Petal Width")
@@ -371,28 +365,28 @@ def surfacePlot3D(data, outputs):
 if __name__ == "__main__":
     data = pd.read_csv('irisdata.csv') # iris dataset to pd data frame; assuming same folder/directory
 
-    # Exercise 1b; Test k-means clustering algorithm on irisdata.csv with k=2,3
-    print("Plotting results of k-means clustering with k=2")
-    k2Values = kMeansClustering(data, 2, 4, retType="D") # Learning algorithm on iris dataset; K=2 and 4 dimension
-    plotD(k2Values, "Learning_Curve_K2")
-    print("Plotting results of k-means clustering with k=3")
-    k3Values = kMeansClustering(data, 3, 4, retType="D") # Learning algorithm on iris dataset; K=3 and 4 dimension
-    plotD(k3Values, "Learning_Curve_K3")
-    # Exercise 1c; Show the initial, intermediate, and converged cluster centers
-    dim = ["petal_length", "petal_width"]
-    cen2Vectors, cen2Means, cen2Maps = kMeansClustering(data, 2, 2, retType="C", dimNames=dim)
-    print("Plotting converged cluster centers throughout for k=2")
-    plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2")
-    cen3Vectors, cen3Means, cen3Maps = kMeansClustering(data, 3, 2, retType="C", dimNames=dim)
-    print("Plotting converged cluster centers throughout for k=3")
-    plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3")
-    # Exercise 1d; Plot decision boundaries; keeping 2 dimension
-    xVal2, yVal2 = decisionBoundary(cen2Means[-1], 2)
-    print("Plotting decision boundary for k=2")
-    plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2", xVal2, yVal2)
-    xVal3, yVal3 = decisionBoundary(cen3Means[-1], 3)
-    print("Plotting decision boundary for k=3")
-    plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3", xVal3, yVal3)
+    # # Exercise 1b; Test k-means clustering algorithm on irisdata.csv with k=2,3
+    # print("Plotting results of k-means clustering with k=2")
+    # k2Values = kMeansClustering(data, 2, 4, retType="D") # Learning algorithm on iris dataset; K=2 and 4 dimension
+    # plotD(k2Values, "Learning_Curve_K2")
+    # print("Plotting results of k-means clustering with k=3")
+    # k3Values = kMeansClustering(data, 3, 4, retType="D") # Learning algorithm on iris dataset; K=3 and 4 dimension
+    # plotD(k3Values, "Learning_Curve_K3")
+    # # Exercise 1c; Show the initial, intermediate, and converged cluster centers
+    # dim = ["petal_length", "petal_width"]
+    # cen2Vectors, cen2Means, cen2Maps = kMeansClustering(data, 2, 2, retType="C", dimNames=dim)
+    # print("Plotting converged cluster centers throughout for k=2")
+    # plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2")
+    # cen3Vectors, cen3Means, cen3Maps = kMeansClustering(data, 3, 2, retType="C", dimNames=dim)
+    # print("Plotting converged cluster centers throughout for k=3")
+    # plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3")
+    # # Exercise 1d; Plot decision boundaries; keeping 2 dimension
+    # xVal2, yVal2 = decisionBoundary(cen2Means[-1], 2)
+    # print("Plotting decision boundary for k=2")
+    # plotCenters(cen2Vectors, cen2Means, cen2Maps, 2, "Petal_Center_K2", xVal2, yVal2)
+    # xVal3, yVal3 = decisionBoundary(cen3Means[-1], 3)
+    # print("Plotting decision boundary for k=3")
+    # plotCenters(cen3Vectors, cen3Means, cen3Maps, 3, "Petal_Center_K3", xVal3, yVal3)
 
     # Exercise 2a; Plot the 2nd and 3rd iris classes
     print("Plotting classes for the 2nd and the 3rd classes")
@@ -408,25 +402,28 @@ if __name__ == "__main__":
     surfacePlot3D(points, results)
 
     # Exercise 3a; mean-squared error calculation
-    points, results, weightedSums, badWeightedSums, bias, weight, badWeight = sigmoidNonlinearNN(input, iter=1)
     patterns = []
     for species in input['species'].tolist():
         patterns.append(0 if (species=='versicolor') else 1)
+    points, results, weightedSums, badWeightedSums, bias, weight, badWeight = sigmoidNonlinearNN(input, patterns, iter=50)
     mse = meanSquaredError(patterns, weightedSums)
     # Exercise 3b; compare MSE for good and bad weight
     goodMSE, badMSE = compareMSE(weightedSums, badWeightedSums, patterns)
     # Exercise 3e; computes the summed gradient & plot how the decision boundary changes for a small step; FIX?
     gradients = summedGradient(points, bias, weightedSums, patterns)
     print("Plotting good weight")
-    plotNNDecisionBoundary(points, results, weight, bias)
+    plotNNDecisionBoundary(points, results, weight, bias, False)
     print("Plotting bad weight; no gradient")
-    plotNNDecisionBoundary(points, results, badWeight, bias)
+    plotNNDecisionBoundary(points, results, badWeight, bias, False)
 
 
     # Exercise 4a; gradient descent
     points, results, weightedSums, badWeightedSums, bias, weight, badWeight, mse = sigmoidNonlinearNN(input, patterns)
     # Exercise 4b; decision boundary & learning curve
     print("Plotting for running gradients multiple times")
-    plotNNDecisionBoundary(points, results, weight, bias)
+    plotNNDecisionBoundary(points, results, weight, bias, False)
     print("Plotting the learning curve for full gradient descents")
     plotD(mse, "NNLearningCurve")
+    print("Printing 3D surface plot")
+    surfacePlot3D(points, results)
+    print(weight, bias)
