@@ -3,30 +3,26 @@
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
 
-
-# Main method for running the current program
-if __name__ == "__main__":
-    data = pd.read_csv('irisdata.csv') # iris dataset to pd data frame; assuming same folder/directory
-    features = data.iloc[:, :-1]  # Features (sepal/petal length/width)
-    species = data.iloc[:, -1]   # Accurate classes; labels for species
-
+# For running the neural network for classification
+def neuralNetwork(features, species):
     # Splitting between training vs. testing sets
-    feat_train, feat_test, sp_train, sp_test = train_test_split(features, species, test_size=0.2, random_state=42)
+    feat_train, feat_test, sp_train, sp_test = train_test_split(features, species, test_size=0.25, random_state=42)
 
-    # Normalizing features
+    # Normalizing features (input data)
     scaler = StandardScaler()
     feat_train = scaler.fit_transform(feat_train)
     feat_test = scaler.transform(feat_test)
 
     # Creating a neural network using MLP classifier
-    NN = MLPClassifier(hidden_layer_sizes=(10,), activation='logistic', max_iter=1000)
+    NN = MLPClassifier(hidden_layer_sizes=(5, 5), solver='lbfgs', max_iter=3000)
+    NN.out_activation_ = 'softmax' # Applying softmax activation function
 
     # Training the model
     NN.fit(feat_train, sp_train)
@@ -34,10 +30,26 @@ if __name__ == "__main__":
     # Making predictions on the test set
     sp_pred = NN.predict(feat_test)
 
-    # Evaluating the model's performance; results
-    accuracy = accuracy_score(sp_test, sp_pred)
-    confusion_mat = confusion_matrix(sp_test, sp_pred)
-    class_report = classification_report(sp_test, sp_pred)
+    return sp_test, sp_pred
+
+
+# For printing out the results/analysis of the model's performance
+def printNNResults(actual, predicted):
+    accuracy = accuracy_score(actual, predicted)
+    confusion_mat = confusion_matrix(actual, predicted)
     print("Accuracy:", accuracy)
     print("Confusion Matrix:\n", confusion_mat)
-    print("Classification report:\n", class_report)
+
+
+# Main method for running the current program
+if __name__ == "__main__":
+    # For importing data set & dividing into two parts
+    data = pd.read_csv('irisdata.csv') # iris dataset to pd data frame; assuming same folder/directory
+    features = data.iloc[:, :-1]  # Features (sepal/petal length/width)
+    species = data.iloc[:, -1]   # Accurate classes; labels for species
+
+    # Building and running neural network
+    sp_test, sp_pred = neuralNetwork(features, species)
+
+    # Printing out the results
+    printNNResults(sp_test, sp_pred)
