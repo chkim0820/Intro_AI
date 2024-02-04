@@ -1,2 +1,2 @@
-# CSDS-391-AI
-For CSDS 391 class projects
+# AI class
+For Intro to AI class projects
