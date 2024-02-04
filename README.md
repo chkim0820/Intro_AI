@@ -1,2 +1,2 @@
 # AI class
-For Intro to AI class projects
+For projects completed in the Intro to AI course taken in Fall 2023
